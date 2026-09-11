@@ -4,7 +4,7 @@
 
 ## 在线访问
 
-🔗 **线上地址（WorkBuddy 发布）**：<https://98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link>
+🔗 **线上地址**：<https://98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link>
 
 ## 功能特性
 
@@ -26,7 +26,6 @@
 
 - 纯 HTML + CSS + 原生 JavaScript，零依赖、零构建
 - 图表为手写 SVG，无需任何第三方库
-- 单文件部署，任意静态托管（GitHub Pages / Nginx / 对象存储）均可直接运行
 
 ## 本地运行
 
@@ -40,4 +39,4 @@ python3 -m http.server 8080
 
 ## 数据更新
 
-数据内置于 `index.html` 中（快照更新至 9.5，持续更新中）。更新数据时修改文件内嵌数据即可，页面自动重算涨跌与排行。
+数据更新至 9.5，持续更新中。
