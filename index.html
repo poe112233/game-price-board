@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="kXtl5GKCVvrGqbPUCO3FBz">
+<head data-page-node-id="J0EIyAuSmiNQAEy1YioW1s">
+<meta charset="UTF-8" data-page-node-id="iCqiwYsnz6s33A5ERajgSK">
+<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="Ds9klbjaqvcYYiUWP5mVLs">
+<meta name="color-scheme" content="dark light" data-page-node-id="wett5tz4OLZcLFZcxCpdfW">
+<title>游戏物价波动看板</title>
+<style>
+:root{
+  --bg:#0a0d14;--card:#131826;--card2:#1a2133;--line:#242e47;
+  --txt:#e9edf6;--dim:#8b95ab;--gold:#f2c14e;--gold2:#ffe29a;
+  --up:#ff5f6d;--down:#37d98b;--flat:#8b95ab;
+  --upbg:rgba(255,95,109,.12);--downbg:rgba(55,217,139,.12);
+  --strong:#c6cede;--soft:rgba(255,255,255,.05);--soft2:rgba(255,255,255,.025);
+  --soft3:rgba(255,255,255,.12);--dash:rgba(36,46,71,.6);--dash2:rgba(36,46,71,.7);
+  --hoverline:#3a4666;--goldline:rgba(242,193,78,.4);--goldline2:rgba(242,193,78,.45);
+  --goldline3:#f2c14e66;--focusring:rgba(242,193,78,.08);
+  --chipon1:#3a2f14;--chipon2:#2a2410;
+  --shadow:rgba(0,0,0,.35);--shadow2:rgba(0,0,0,.5);
+  --maskbg:rgba(5,8,14,.72);--pointstroke:#0a0d14;
+  --title1:#ffe29a;--title2:#f2c14e;--title3:#e88f4a;
+  --modalbd:#2c3856;--barup1:#ff5f6d;--barup2:#ff9a6d;--bardown1:#2bbf78;--bardown2:#7be0a0;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --bg:#eef1f8;--card:#ffffff;--card2:#f7f9fe;--line:#dce2ef;
+  --txt:#222a40;--dim:#69748f;--gold:#b8860b;--gold2:#8a5f00;
+  --up:#e0244a;--down:#0c9d5c;--flat:#69748f;
+  --upbg:rgba(224,36,74,.09);--downbg:rgba(12,157,92,.1);
+  --strong:#3c4560;--soft:rgba(34,42,64,.055);--soft2:rgba(34,42,64,.03);
+  --soft3:rgba(34,42,64,.1);--dash:rgba(120,132,160,.45);--dash2:rgba(120,132,160,.55);
+  --hoverline:#a8b4d0;--goldline:rgba(184,134,11,.45);--goldline2:rgba(184,134,11,.5);
+  --goldline3:rgba(184,134,11,.4);--focusring:rgba(184,134,11,.1);
+  --chipon1:#f9efd6;--chipon2:#f3e4bc;
+  --shadow:rgba(90,105,140,.16);--shadow2:rgba(90,105,140,.22);
+  --maskbg:rgba(235,239,248,.72);--pointstroke:#ffffff;
+  --title1:#b8860b;--title2:#9a6a00;--title3:#7a5200;
+  --modalbd:#c9d2e6;--barup1:#e0244a;--barup2:#ff8a5c;--bardown1:#0c9d5c;--bardown2:#5cc793;
+  color-scheme:light;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:
+    radial-gradient(1100px 520px at 75% -8%,var(--glow1) 0%,rgba(0,0,0,0) 60%),
+    radial-gradient(900px 500px at -10% 20%,var(--glow2) 0%,rgba(0,0,0,0) 55%),
+    var(--bg);
+  color:var(--txt);
+  font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  padding:30px 18px 70px;line-height:1.5;
+  transition:background .3s,color .3s;
+}
+:root{--glow1:#1c2444;--glow2:#141b33}
+html[data-theme="light"]{--glow1:#dde5f5;--glow2:#e6ebf7}
+.wrap{max-width:1280px;margin:0 auto}
+
+/* ── 头部 ── */
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{font-size:30px;font-weight:800;letter-spacing:1px;
+  background:linear-gradient(92deg,var(--title1),var(--title2) 45%,var(--title3));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:13px;margin-top:6px}
+.sub b{color:var(--strong);font-weight:600}
+/* ── 币价走势独立面板 ── */
+.coinpanel{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:16px;padding:16px 20px 12px;margin-bottom:14px}
+.cph{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.cpt{font-size:17px;font-weight:800}
+.cpbadge{font-size:11px;color:var(--gold2);border:1px solid var(--goldline);border-radius:6px;
+  padding:1px 7px;vertical-align:2px;margin-left:5px;font-weight:600}
+.cptabs{display:flex;gap:8px}
+.cptab{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:999px;
+  padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s}
+.cptab:hover{color:var(--txt);border-color:var(--hoverline)}
+.cptab.on{background:linear-gradient(92deg,var(--chipon1),var(--chipon2));border-color:var(--goldline2);
+  color:var(--gold2);font-weight:700}
+.cpkpi{display:flex;gap:30px;flex-wrap:wrap;margin:14px 0 2px}
+.cpk{font-size:12px;color:var(--dim)}
+.cpk b{display:block;font-size:20px;font-weight:800;margin-top:2px;color:var(--strong)}
+.cpk b.up{color:var(--up)}.cpk b.down{color:var(--down)}.cpk b.flat{color:var(--flat)}
+
+/* ── KPI ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px}
+.kpi{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:14px;padding:13px 16px}
+.kt{font-size:12px;color:var(--dim)}
+.kt.up{color:var(--up)}.kt.down{color:var(--down)}
+.kv{font-size:25px;font-weight:800;margin-top:4px}
+.kv.up{color:var(--up)}.kv.down{color:var(--down)}
+.kv span{font-size:12px;font-weight:600;color:var(--dim);margin-left:4px}
+
+/* ── 排行榜 ── */
+.sechead{display:flex;align-items:baseline;gap:10px;margin:28px 0 12px;font-size:17px;font-weight:700}
+.hint{font-size:12px;color:var(--dim);font-weight:400}
+.rank{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.rank{grid-template-columns:1fr}}
+.rankcol{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
+.rtitle{font-size:13.5px;font-weight:700;padding:4px 0 8px;border-bottom:1px solid var(--line)}
+.rtitle.up{color:var(--up)}.rtitle.down{color:var(--down)}
+.rrow{display:grid;grid-template-columns:minmax(0,1fr) 88px 62px 86px;align-items:center;gap:8px;
+  padding:6.5px 0;border-bottom:1px dashed var(--dash);cursor:pointer;font-size:13px}
+.rrow:last-child{border-bottom:none}
+.rrow:hover .rname{color:var(--gold2)}
+.rname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbar{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.rbar i{display:block;height:100%;border-radius:4px}
+.rbar i.up{background:linear-gradient(90deg,var(--barup1),var(--barup2))}
+.rbar i.down{background:linear-gradient(90deg,var(--bardown1),var(--bardown2))}
+.rpct{text-align:right;font-weight:700}
+.rpct.up{color:var(--up)}.rpct.down{color:var(--down)}
+.rprice{text-align:right;color:var(--dim);font-size:12.5px}
+.rempty{color:var(--dim);font-size:13px;padding:18px 0;text-align:center}
+
+/* ── 工具栏 ── */
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:28px 0 12px}
+.searchbox{flex:1;min-width:260px;display:flex;align-items:center;gap:9px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:0 14px;height:44px;transition:.2s}
+.searchbox:focus-within{border-color:var(--goldline3);box-shadow:0 0 0 3px var(--focusring)}
+.searchbox .ico{font-size:15px;opacity:.8}
+.searchbox input{flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:15px;height:100%}
+.searchbox input::placeholder{color:var(--dim)}
+select{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:12px;
+  height:44px;padding:0 12px;font-size:14px;outline:none;cursor:pointer}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:thin}
+.chip{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:999px;
+  padding:6px 13px;font-size:13px;cursor:pointer;white-space:nowrap;transition:.15s}
+.chip:hover{color:var(--txt);border-color:var(--hoverline)}
+.chip.on{background:linear-gradient(92deg,var(--chipon1),var(--chipon2));border-color:var(--goldline2);color:var(--gold2)}
+.chip b{opacity:.6;font-weight:600;margin-left:4px}
+.count{font-size:12.5px;color:var(--dim);margin:2px 0 8px}
+
+/* ── 物品卡片 ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px;margin-top:8px}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+  border-radius:16px;padding:14px 16px;cursor:pointer;transition:.18s;position:relative;overflow:hidden}
+.card:hover{transform:translateY(-3px);border-color:var(--goldline);box-shadow:0 10px 30px var(--shadow)}
+.c1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.nm{font-weight:700;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.un{flex:0 0 auto;font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+.c2{font-size:12px;color:var(--dim);margin:2px 0 8px}
+.c3 svg{width:100%;height:46px;display:block;background:var(--soft2);border-radius:8px}
+.c4{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+.pv{font-size:21px;font-weight:800;color:var(--gold2)}
+.bd{font-size:12.5px;font-weight:700;border-radius:8px;padding:3px 8px;white-space:nowrap}
+.bd.up{color:var(--up);background:var(--upbg)}
+.bd.down{color:var(--down);background:var(--downbg)}
+.bd.flat{color:var(--flat);background:var(--soft)}
+.c5{display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);gap:4px}
+.c5 span{font-size:11px;color:var(--dim)}
+.c5 b{color:var(--strong);font-weight:600;display:block;font-size:12.5px;margin-top:1px}
+.empty{grid-column:1/-1;text-align:center;color:var(--dim);padding:70px 0;font-size:14.5px}
+
+/* ── 弹窗 ── */
+.mask{position:fixed;inset:0;background:var(--maskbg);backdrop-filter:blur(4px);
+  display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;z-index:50}
+.mask.show{display:flex}
+.modal{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--modalbd);border-radius:18px;
+  max-width:780px;width:100%;padding:22px 24px;position:relative;box-shadow:0 24px 80px var(--shadow2)}
+.x{position:absolute;top:14px;right:14px;background:var(--soft2);border:none;color:var(--dim);
+  width:32px;height:32px;border-radius:9px;cursor:pointer;font-size:14px}
+.x:hover{color:var(--txt);background:var(--soft3)}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;padding-right:36px}
+.mt{font-size:20px;font-weight:800}
+.mt .un{vertical-align:2px;margin-left:6px}
+.mc{font-size:12.5px;color:var(--dim);margin-top:2px}
+svg.big{width:100%;height:auto;display:block;margin-top:4px}
+svg.big .ax{fill:var(--dim);font-size:12px}
+svg.big .pv{font-size:13px;font-weight:700}
+.dt{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+.dt th{color:var(--dim);font-weight:600;text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);font-size:12.5px}
+.dt td{padding:8px 10px;border-bottom:1px dashed var(--dash2)}
+.dt td.up{color:var(--up)}.dt td.down{color:var(--down)}.dt td.flat{color:var(--dim)}
+.mnote{margin-top:10px;font-size:12px;color:var(--dim)}
+
+footer{margin-top:36px;color:var(--dim);font-size:12.5px;line-height:1.9;border-top:1px solid var(--line);padding-top:14px}
+footer b{color:var(--txt);opacity:.75}
+
+/* ── SVG 趋势线（颜色随主题与涨跌自动适配）── */
+.up{--tc:var(--up)}.down{--tc:var(--down)}.flat{--tc:var(--flat)}
+svg .tl{stroke:var(--tc);fill:none;stroke-linejoin:round;stroke-linecap:round}
+svg .td{fill:var(--tc)}
+svg.big .tl{stroke-width:2.5}
+svg.big .pv{fill:var(--tc)}
+
+/* ── 主题切换按钮 ── */
+.theme-btn{position:fixed;top:16px;right:16px;z-index:60;width:42px;height:42px;border-radius:50%;
+  background:var(--card);border:1px solid var(--line);color:var(--txt);font-size:18px;cursor:pointer;
+  box-shadow:0 4px 16px var(--shadow);transition:.2s;display:flex;align-items:center;justify-content:center}
+.theme-btn:hover{border-color:var(--goldline);transform:rotate(18deg) scale(1.06)}
+</style>
+</head>
+<body data-page-node-id="3BCPs9zBsB2VJ1nwkSWour">
+<button class="theme-btn" id="themeBtn" title="切换浅色 / 深色主题" data-page-node-id="7UUNEPxBR2lO8WddLYg7v9">🌙</button>
+<div class="wrap" data-page-node-id="HbTCnfuzGxTdK80ZAaYDXv">
+
+  <header data-page-node-id="VvnYzHhZmXBwNfDPxqdDC6">
+    <div data-page-node-id="SD3nTQzMHSa8uk2gxMnE9I">
+      <h1 data-page-node-id="UEvuHleRsVNMV1D1Zp0N9e">游戏物价波动看板</h1>
+      <div class="sub" data-page-node-id="9epQAGR3yED8FykQrhUkB1">数据周期更新于 <b data-page-node-id="nUCf4nZvCwli9WgfeTCtgD">9.5</b>（持续更新中） · 点击卡片查看波动详情 · 搜索支持 <b data-page-node-id="o39ERU4JG3RjCSABKAGfEu">中文 / 拼音首字母</b></div>
+    </div>
+    <div class="coin" data-page-node-id="DBxX7wuznhowQAsGUn1q8d" style="display:none">
+      <div class="t" data-page-node-id="G9GOYui4w8yqhde4stihOJ"><span data-page-node-id="ahRB8LN3ebM2YJmEzeothE">💰 币价走势（出币）</span><span style="color:var(--dim)" data-page-node-id="7YyRAzBePDLgNn7uGkVmVh">近30天</span></div>
+      <div class="v" id="coinVals" data-page-node-id="kaoRHxonoy5hacOfFriyDI"></div>
+      <div id="coinSpark" data-page-node-id="fENzmMDqJBjiXJDp2mET50"></div>
+    </div>
+  </header>
+
+  <section class="coinpanel">
+    <div class="cph">
+      <div>
+        <div class="cpt">💰 币价走势 <span class="cpbadge">出币</span></div>
+      </div>
+      <div class="cptabs" id="coinTabs">
+        <button class="cptab" data-days="7">近7天</button>
+        <button class="cptab on" data-days="30">近30天</button>
+      </div>
+    </div>
+    <div class="cpkpi" id="coinKpi"></div>
+    <div id="coinBig"></div>
+  </section>
+
+  <section class="kpis" id="kpis" data-page-node-id="9vsR3wBCr59tcJ79tGrUQd"></section>
+
+  <div class="sechead" data-page-node-id="j87CRtLdtpTSAN8r979M9n">📈 波动排行 <span class="hint" data-page-node-id="UJcrrBwyB4m89VXOb2J6BT">首期 8.15 → 最新 9.5 累计涨跌幅 · 点击行查看详情</span></div>
+  <section class="rank" data-page-node-id="0qleXAzCG8SxxZO1FXtc1V">
+    <div class="rankcol" data-page-node-id="QLX9bQ6FOemibG1UmpKjuQ"><div class="rtitle up" data-page-node-id="XNMVUhiZUoFmVPBG0GT7uQ">▲ 涨幅 TOP10</div><div id="rankUp" data-page-node-id="nHHpNceAuVYnmV96Vugc54"></div></div>
+    <div class="rankcol" data-page-node-id="aHjvQCf9p7qiWQ2jp197wZ"><div class="rtitle down" data-page-node-id="BEVgKlFgJe7QCsh58QwApk">▼ 跌幅 TOP10</div><div id="rankDown" data-page-node-id="Ynel7Z21r2ICUV1H0fFeLn"></div></div>
+  </section>
+
+  <section class="toolbar" data-page-node-id="NWckLjCbacVo0AifsVgstK">
+    <div class="searchbox" data-page-node-id="ux04ns6ZRbv3aKWqrTtvMc">
+      <span class="ico" data-page-node-id="C6uilIYJYuQc2f8W0bnq5B">🔍</span>
+      <input id="search" placeholder="模糊搜索物品 / 分类 / 拼音首字母，如：琉璃、符咒、lls、fy" autocomplete="off" data-page-node-id="zH4VYsk8Cm6do1bbnF0W1z">
+    </div>
+    <select id="unitSel" data-page-node-id="5dHJqcoXm8RYw0rZHibnpR">
+      <option value="全部" data-page-node-id="ghZsNdVE78an9h9nWqperM">全部单位</option>
+      <option value="W" data-page-node-id="U416ePGypnRk9ymUHzWWCO">万（W）</option>
+      <option value="E" data-page-node-id="N7wLiAdVqkGtRRNasv5XPg">亿（E）</option>
+    </select>
+    <select id="sortSel" data-page-node-id="EvlM4NzMN2GOa1UjLUORLR">
+      <option value="def" data-page-node-id="t9K821l9Ax1DpQPIw4SnnE">默认排序（按分类）</option>
+      <option value="up" data-page-node-id="vxwgipNwRyDBoQqh1QJ9Ob">涨幅从高到低</option>
+      <option value="down" data-page-node-id="sUH3vHHwAN1r7cLhQ7uoPb">跌幅从大到小</option>
+      <option value="vol" data-page-node-id="hyCcAY3Y6SxO7tN2RJ5bTj">波动幅度从大到小</option>
+      <option value="price" data-page-node-id="rry1Vk75W8UbkqQoWWAFmt">最新价格从高到低</option>
+      <option value="name" data-page-node-id="6TTwhAOdp3lswXCGxbje1X">名称排序</option>
+    </select>
+  </section>
+  <div class="chips" id="chips" data-page-node-id="3dEmSXCPmzlGmzQJbycRsT"></div>
+  <div class="count" id="count" data-page-node-id="uo5SVlEf6HnX036JRipELO"></div>
+  <section class="grid" id="grid" data-page-node-id="C1s8a0aL1wknDeCsxQHDo4"></section>
+
+  <footer data-page-node-id="yOuBLY2ixdgXJef5uHxUsP">
+    <p data-page-node-id="Rz2cHaOUF61C0lG16a4zEg">· 单位说明：<b data-page-node-id="kwUWTvhAFGswB0JL211F2n">W = 万</b>，<b data-page-node-id="qWPCWBn5S5plTRkGNDNI0s">E = 亿</b>；原表 E 列中以「W」结尾的数值（如 130W）即为 130 万。涨跌幅按统一换算为「万」后的数值计算，不受单位影响。</p>
+  </footer>
+</div>
+
+<div class="mask" id="mask" data-page-node-id="h3PtMYSvuj3e9qWh6BbVFF"><div class="modal" id="modal" data-page-node-id="qKCR3l9gXO5P5KSppnNSMX"></div></div>
+
+<script>
+/* ===================== 数据区（后续补充图表直接在这里扩展） =====================
+ * 新增日期：在 DATES 末尾追加日期，并给 RAW 中每个物品的 prices 数组末尾追加该期价格，COIN 追加币价；
+ * 新增物品：按 ["名称","分类","单位W/E",[各期价格]] 的格式在 RAW 中追加一行即可。
+ */
+const DATES = ["8.15","8.23","9.5"];
+/* 币价走势数据（近30天，8.13-9.8），只记录出币价；
+ * 区间价取上限（如 285-284.5 记 285）；无数据的日期沿用前一日价格（前向填充）。
+ * 新增币价：COIN_DATES 末尾追加日期，COIN 追加当日出币价即可。 */
+const COIN_DATES = ["8.13","8.14","8.15","8.16","8.17","8.18","8.19","8.20","8.21","8.22","8.23","8.24","8.25","8.26","8.27","8.28","8.29","8.30","8.31","9.1","9.2","9.3","9.4","9.5","9.6","9.7","9.8"];
+const COIN  = [285,285,285,285,285,284.5,284.5,284,284,284,284,284,284,284,284,284,284,284,284,284,284.5,284.5,284.5,284.5,284.5,284.5,284.5];
+
+const RAW = [
+/* ── 表1 ── */
+["琉璃石","副职材料","W",[1.2,1.2,1.2]],
+["镶金石","副职材料","W",[0.8,0.9,0.8]],
+["圣灵珠","副职材料","W",[14.5,13.5,14.5]],
+["碎玉","副职材料","W",[5,5,5]],
+["火纹玉","副职材料","W",[1.3,1.3,1.3]],
+["五香粉","副职材料","W",[2.3,2.3,2.3]],
+["帝休木","副职材料","W",[37.5,38.7,38.6]],
+["飞玄","副职材料","W",[60.5,61.5,60]],
+["紫气","副职材料","W",[149,152,153]],
+["武力之石","武智精华","W",[35.5,36.5,36.5]],
+["智力之石","武智精华","W",[35,35,36.5]],
+["韧性之石","武智精华","W",[14.5,14.5,14.5]],
+["武力精华","武智精华","W",[190,192,190]],
+["智力精华","武智精华","W",[195,197,197]],
+["韧性精华","武智精华","W",[199,200,198]],
+["活力涨不停","经验称号","E",[1.25,1.25,1.4]],
+["小小战神","经验称号","E",[1.35,1.28,1.3]],
+["小小勇士","经验称号","E",[0.38,0.45,0.6]],
+["经验无忧祝福","经验称号","E",[1.26,1.25,1.19]],
+["经验成长祝福","经验称号","E",[2,2.1,2.3]],
+["多C经验","经验称号","E",[2.09,2.14,2.13]],
+["修行的护持","经验称号","E",[0.97,1.04,0.95]],
+/* ── 表2 ── */
+["低级灵蕴果","灵蕴果","W",[3.5,3.5,3.5]],
+["中级灵蕴果","灵蕴果","W",[7.5,7.4,7.4]],
+["高级灵蕴果","灵蕴果","W",[15.5,15.8,15.6]],
+["超级灵蕴果","灵蕴果","W",[34.5,38,34]],
+["单满拳头","奥义","E",[1.38,1.38,1.38]],
+["解控拳头","奥义","E",[1.85,1.85,1.85]],
+["单满屠龙","奥义","E",[1.2,1.2,1.2]],
+["2+6一阳指","奥义","E",[23.5,23.8,23.8]],
+["2+6小完美","奥义","E",[28.7,28.8,28.8]],
+["日月风华","八阵图","W",[13,12.8,11.8]],
+["阵法残卷","八阵图","W",[248,249,251]],
+["阵法精要","八阵图","W",[336,342,345]],
+["初阶八阵","八阵图","E",["130W","130W","120W"]],
+["24攻八阵","八阵图","E",[3.6,3.4,3.6]],
+["四满八阵","八阵图","E",[6.45,6.48,6.5]],
+["五满八阵","八阵图","E",[18.7,18.7,19]],
+["六满八阵","八阵图","E",[44.7,44.9,45.1]],
+["雪莲怒凋","技书经络","W",[1550,1600,1700]],
+["万箭穿心","技书经络","W",[2100,1950,2100]],
+["虎虎生威","技书经络","W",[4850,5000,4700]],
+/* ── 表3 ── */
+["雏菊","亲密材料","W",[2,2.2,2.5]],
+["薰衣草","亲密材料","W",[3.5,3.6,3.5]],
+["百合花","亲密材料","W",[6,5.8,6]],
+["相思红豆","亲密材料","W",[9.5,9.8,11.2]],
+["明珠","亲密材料","W",[15,15.3,15]],
+["芙蓉珠","亲密材料","W",[98,104,96]],
+["未毛0毛","羽毛","W",[1,0.8,0.8]],
+["一毛","羽毛","W",[4.2,3.8,3.5]],
+["二毛","羽毛","W",[41,40,40]],
+["三毛","羽毛","W",[104,100,104]],
+["四毛","羽毛","W",[313,313,315]],
+["五毛","羽毛","W",[575,578,595]],
+["七彩鸾羽","羽毛","W",[765,784,771]],
+["枫之羽1C","翅膀","E",["60W","60W","60W"]],
+["月影男2C","翅膀","E",["670W","680W","680W"]],
+["幽灵男3C","翅膀","E",[0.49,0.49,0.49]],
+["血影男4C","翅膀","E",[2.87,2.88,2.9]],
+["战天使男5C","翅膀","E",[8.6,8.65,8.8]],
+["飒飒女5C新","翅膀","E",[8.9,8.8,8.9]],
+["蝶之羽1C","翅膀","E",["60W","60W","55W"]],
+["晓梦女2C","翅膀","E",["700W","700W","670W"]],
+["幻灵女3C","翅膀","E",[0.49,0.48,0.49]],
+["玄影女4C","翅膀","E",[2.9,2.88,2.9]],
+["炽天使女5C","翅膀","E",[8.6,8.7,8.85]],
+["香香女5C新","翅膀","E",[9.2,9.3,9.4]],
+/* ── 表4 ── */
+["未鉴定符咒","符咒碎片","W",[1.5,1.3,1.4]],
+["一级符咒","符咒碎片","W",[3,3.5,3.2]],
+["二级符咒","符咒碎片","W",[15,14,15]],
+["三级符咒","符咒碎片","W",[36,36,37.5]],
+["四级符咒","符咒碎片","W",[65,68,68.5]],
+["五级符咒","符咒碎片","W",[135,142,139]],
+["六级符咒","符咒碎片","W",[282,300,292]],
+["坠星1F","符咒注灵","E",["100W","100W","100W"]],
+["千叶2F","符咒注灵","E",["370W","380W","390W"]],
+["凌雪3F","符咒注灵","E",[0.16,0.16,0.17]],
+["飞羽4F","符咒注灵","E",[0.5,0.51,0.51]],
+["飞羽4F1注","符咒注灵","E",[0.71,0.72,0.72]],
+["星芒5F","符咒注灵","E",[1.93,1.98,1.98]],
+["星芒5F1注","符咒注灵","E",[2.55,2.55,2.58]],
+["天时5F","符咒注灵","E",[2.4,2.5,2.6]],
+["天时5F1注","符咒注灵","E",[2.9,3.2,3.15]],
+["徊翔6F","符咒注灵","E",[6.8,7,7.2]],
+["徊翔6F1注","符咒注灵","E",[9.85,9.95,10.2]],
+["徊翔满注","符咒注灵","E",[27,27,27.8]],
+["万物6F","符咒注灵","E",[8,8.2,8.4]],
+["万物6F1注","符咒注灵","E",[10.4,10.6,10.6]],
+["万物满注","符咒注灵","E",[28,28,28]],
+/* ── 表5 ── */
+["初阶","升阶材料","W",[2,2,2]],
+["二阶","升阶材料","W",[4.2,4.2,4.2]],
+["三阶","升阶材料","W",[8.5,8.5,8.5]],
+["四阶","升阶材料","W",[23,23,23.5]],
+["五阶","升阶材料","W",[72,75,75]],
+["六阶","升阶材料","W",[148,155,156]],
+["七阶","升阶材料","W",[314,320,326]],
+["八阶","升阶材料","W",[682,689,698]],
+["九阶","升阶材料","W",[1315,1325,1350]],
+["洛水","技能卡","E",[5.3,5.4,5.1]],
+["九阶钢锁","技能卡","E",[4,4,4.1]],
+["十阶钢锁","技能卡","E",[5.9,5.8,5.8]],
+["九阶汰连","技能卡","E",[5.25,5.2,5.2]],
+["十阶汰连","技能卡","E",[8.9,8.9,9.05]],
+["九阶技能张","技能卡","E",[5.5,5.6,5.7]],
+["十阶技能张","技能卡","E",[8.15,8.2,8.35]],
+["九阶五被动","技能卡","E",[4.1,4.1,4.2]],
+["十阶五被动","技能卡","E",[5.1,5.1,5.2]],
+["僵尸大白菜","元神技能","W",[2.5,2.6,2.7]],
+["元神精粹","元神技能","W",[26.5,26.5,26.8]],
+["元神成长丸","元神技能","W",[210,217,216]],
+["洗炼之玉","元神技能","W",[165,168,171]],
+["乱舞（低）","元神技能","W",[650,700,710]],
+["嗜血（高）","元神技能","W",[250,250,240]],
+["破甲（高）","元神技能","W",[1050,1100,1500]],
+["雪恨（高）","元神技能","W",[2600,2600,2500]],
+/* ── 补充批次2（第二轮4张表，同周期 8.15/8.23/9.5）── */
+/* 糖果丹墨 */
+["甜甜圈","糖果丹墨","W",[36.3,37,38]],
+["棉花糖","糖果丹墨","W",[11.8,11.8,12.8]],
+["彩虹糖","糖果丹墨","W",[5,5,5.8]],
+["洗髓丹","糖果丹墨","W",[265,262,268]],
+["童子技","糖果丹墨","W",[142,142,150]],
+["波板糖","糖果丹墨","W",[21,22,23.6]],
+["香墨","糖果丹墨","W",[86,86,94]],
+["精制香磨","糖果丹墨","W",[260,260,268]],
+/* 技能心法 */
+["冰魄","技能心法","W",[400,400,430]],
+["三昧","技能心法","W",[830,825,845]],
+["玄黄","技能心法","W",[445,450,510]],
+["浑天","技能心法","W",[4000,4200,4300]],
+["裂地击","技能心法","W",[310,350,400]],
+["雷箭谛","技能心法","W",[990,990,1080]],
+["幻痛矢","技能心法","W",[410,390,420]],
+/* 灵物精灵 */
+["灵心","灵物精灵","W",[126,124,126]],
+["绿灵","灵物精灵","W",[21,21.5,21.5]],
+["蓝灵","灵物精灵","W",[32,32,32]],
+["紫灵","灵物精灵","W",[4000,4000,4000]],
+["20级灵","灵物精灵","W",[4180,4180,4150]],
+["蓝博（降3）","灵物精灵","W",[970,980,960]],
+["蓝博（降4）","灵物精灵","W",[8450,8450,8300]],
+/* 蓝开紫开 */
+["蓝开破空","蓝开紫开","E",[8.1,8.1,8.1]],
+["蓝开野兽","蓝开紫开","E",[7.1,7.1,7.1]],
+["蓝开禁卫","蓝开紫开","E",[13.7,13.7,13.7]],
+["蓝开YYD","蓝开紫开","E",[14,14,14]],
+["紫开YYD","蓝开紫开","E",[53,53,53]],
+["蓝开FFD","蓝开紫开","E",[14.8,14.8,14.8]],
+["紫开FFD","蓝开紫开","E",[54.6,54.6,54.6]],
+["紫野兽（物）","蓝开紫开","E",[26.5,26.5,26.5]],
+["紫破空（法）","蓝开紫开","E",[28.8,28.8,28.8]],
+/* 装备魂 */
+["高改","装备魂","W",[5.5,5.8,5.6]],
+["能量之源","装备魂","W",[17,17,17]],
+["财富之源","装备魂","W",[4.5,4.3,4.5]],
+["武器魂","装备魂","W",[105,106,108]],
+["护手魂","装备魂","W",[48,45.5,48]],
+["鞋子魂","装备魂","W",[29,27,31]],
+["帽子魂","装备魂","W",[24,23,27]],
+["裤子魂","装备魂","W",[24,24,26]],
+["衣服魂","装备魂","W",[24,24,27]],
+/* 首饰碎片 */
+["高级首饰碎片","首饰碎片","W",[0.5,0.5,0.5]],
+["特级首饰碎片","首饰碎片","W",[0.6,0.6,0.8]],
+["至臻首饰碎片","首饰碎片","W",[1.2,1.3,1.5]],
+["朔金首饰碎片","首饰碎片","W",[20,25,24]],
+/* 黄阶 */
+["1黄","黄阶","W",[0.1,0.1,0.1]],
+["4黄","黄阶","W",[1,1,1]],
+["5黄","黄阶","W",[2.2,2.4,2.5]],
+["6黄","黄阶","W",[7,7,7.2]],
+["7黄","黄阶","W",[20,20,21]],
+["8黄","黄阶","W",[81,84,82]],
+["10黄","黄阶","W",[256,255,265]],
+["11黄","黄阶","W",[402,402,416]],
+["12黄","黄阶","W",[585,592,600]],
+["13黄","黄阶","W",[820,837,860]],
+["14黄","黄阶","W",[1210,1220,1250]],
+["16黄","黄阶","W",[2080,2020,2100]],
+/* 装备饰品模 */
+["装备模（低）","装备饰品模","W",[2.8,2.5,1.7]],
+["装备模（中）","装备饰品模","W",[2,1.8,0.8]],
+["装备模（高）","装备饰品模","W",[2.6,2.4,2.4]],
+["装备模（极）","装备饰品模","W",[0.1,0.1,0.1]],
+["装备模（绝）","装备饰品模","W",[0.3,0.2,0.2]],
+["装备模（帝）","装备饰品模","W",[2.3,2,2.3]],
+["装备模（圣）","装备饰品模","W",[3.2,3,2.6]],
+["装备模（尊）","装备饰品模","W",[14.5,14.5,12.6]],
+["饰品模（中）","装备饰品模","W",[24.5,24.3,23]],
+["饰品模（高）","装备饰品模","W",[13,13.3,13.5]],
+["饰品模（极）","装备饰品模","W",[5,4.8,5.5]],
+["饰品模（绝）","装备饰品模","W",[2.5,2.7,3]],
+["饰品模（帝）","装备饰品模","W",[27,29,30]],
+["饰品模（圣）","装备饰品模","W",[6.5,6.8,6.5]],
+["饰品模（尊）","装备饰品模","W",[53,50,48]],
+/* 品级 */
+["凡品","品级","W",[57,57,57]],
+["妙品","品级","W",[114,114,114]],
+["糯米妖","品级","W",[290,290,290]],
+/* 宠物伙伴（原表"长生（满级）""神力（满级）"两行无数据，未收录） */
+["猛兽（变异）","宠物伙伴","E",[6.2,6.2,6.2]],
+["猛兽（满级）","宠物伙伴","E",[4.3,4.3,4.3]],
+["猛兽（一级）","宠物伙伴","E",[1,1,1]],
+["精怪（变异）","宠物伙伴","E",[6.1,6.1,6.1]],
+["精怪（满级）","宠物伙伴","E",[4.3,4.3,4.3]],
+["精怪（一级）","宠物伙伴","E",[1,1,1]],
+["护甲（变异）","宠物伙伴","E",[6.3,6.3,6.3]],
+["护甲（满级）","宠物伙伴","E",[4.3,4.3,4.3]],
+["魔卫（变异）","宠物伙伴","E",[6.3,6.3,6.3]],
+["魔卫（满级）","宠物伙伴","E",[4.3,4.3,4.3]],
+["长生（变异）","宠物伙伴","E",[6.6,6.6,6.6]],
+["神力（变异）","宠物伙伴","E",[5.1,5.1,5.1]],
+["灵佑","宠物伙伴","E",[4.4,4.4,4.4]],
+["呆萌","宠物伙伴","E",[4.4,4.4,4.4]]
+];
+
+/* 拼音首字母字典（覆盖当前物品名用字，新增物品若含新字可自行补充） */
+const PY = {"莲":"l","怒":"n","凋":"d","攻":"g","雏":"c","徊":"h","琉":"l","璃":"l","石":"s","镶":"x","金":"j","圣":"s","灵":"l","珠":"z","碎":"s","玉":"y","火":"h","纹":"w","五":"w","香":"x","粉":"f","帝":"d","休":"x","木":"m","飞":"f","玄":"x","紫":"z","气":"q","武":"w","力":"l","之":"z","智":"z","韧":"r","华":"h","活":"h","涨":"z","不":"b","停":"t","小":"x","战":"z","神":"s","勇":"y","士":"s","经":"j","验":"y","无":"w","忧":"y","祝":"z","福":"f","成":"c","多":"d","修":"x","行":"x","的":"d","护":"h","持":"c","低":"d","级":"j","蕴":"y","果":"g","单":"d","满":"m","拳":"q","解":"j","控":"k","屠":"t","龙":"l","一":"y","阳":"y","指":"z","完":"w","美":"m","日":"r","月":"y","风":"f","阵":"z","法":"f","残":"c","要":"y","初":"c","结":"j","八":"b","四":"s","六":"l","戏":"x","雪":"x","域":"y","渊":"y","万":"w","箭":"j","穿":"c","心":"x","虎":"h","生":"w","威":"w","笔":"b","菊":"j","薰":"x","衣":"y","草":"c","百":"b","合":"h","相":"x","思":"s","红":"h","豆":"d","明":"m","芙":"f","蓉":"r","未":"w","二":"e","三":"s","毛":"m","七":"q","彩":"c","鸾":"l","羽":"y","枫":"f","影":"y","男":"n","幽":"y","血":"x","天":"t","使":"s","女":"n","飒":"s","新":"x","蝶":"d","晓":"x","梦":"m","幻":"h","玄":"x","炽":"c","香":"x","坠":"z","星":"x","千":"q","叶":"y","凌":"l","芒":"m","时":"s","御":"y","翔":"x","物":"w","阶":"j","洛":"l","水":"s","钢":"g","锁":"s","十":"s","汰":"t","连":"l","技":"j","能":"n","张":"z","被":"b","动":"d","僵":"j","尸":"s","大":"d","白":"b","菜":"c","元":"y","精":"j","粹":"c","丸":"w","洗":"x","炼":"l","乱":"l","舞":"w","嗜":"s","破":"p","甲":"j","恨":"h","很":"h","咒":"z","符":"f","鉴":"j","定":"d","超":"c","注":"z","性":"x","长":"z","中":"z","高":"g","头":"t","卷":"j","花":"h","九":"j",
+"甜":"t","圈":"q","棉":"m","虹":"h","髓":"s","童":"t","波":"b","板":"b","墨":"m","制":"z","磨":"m","魄":"p","昧":"m","黄":"h","浑":"h","裂":"l","地":"d","击":"j","雷":"l","谛":"d","痛":"t","矢":"s","绿":"l","蓝":"l","博":"b","降":"j","开":"k","空":"k","野":"y","兽":"s","禁":"j","卫":"w","改":"g","能":"n","量":"l","源":"y","财":"c","富":"f","器":"q","魂":"h","手":"s","鞋":"x","帽":"m","裤":"k","衣":"y","首":"s","片":"p","至":"z","臻":"z","朔":"s","模":"m","凡":"f","炒":"c","糯":"n","妖":"y","猛":"m","怪":"g","魔":"m","佑":"y","呆":"d","萌":"m","变":"b","异":"y","品":"p","备":"b","装":"z",
+"糖":"t","丹":"d","子":"z","冰":"b","服":"f","饰":"s","特":"t","极":"j","绝":"j","尊":"z","妙":"m","米":"m"};
+
+/* ===================== 运行时 ===================== */
+const items = RAW.map((r,i)=>{
+  const name=r[0],cat=r[1],unit=r[2],prices=r[3];
+  const wan = prices.map(p => typeof p==="string" ? parseFloat(p) : (unit==="E" ? p*10000 : p));
+  const change = (wan[wan.length-1]-wan[0])/wan[0]*100;
+  let py=""; for(const ch of name){ const c=PY[ch]!==undefined?PY[ch]:ch; if(/[a-z0-9]/i.test(c)) py+=c; }
+  return {idx:i,name,cat,unit,prices,wan,change,py:py.toLowerCase()};
+});
+
+const $ = s=>document.querySelector(s);
+let state = {q:"", cat:"全部", unit:"全部", sort:"def"};
+
+function cls(c){ return c>0.005 ? "up" : (c<-0.005 ? "down" : "flat"); }
+function pctTxt(c){ const r=Math.round(c*10)/10; return (r>0?"+":"")+r.toFixed(1)+"%"; }
+function badge(c){ const k=cls(c); const a=k==="up"?"▲":(k==="down"?"▼":"—");
+  return '<span class="bd '+k+'">'+a+" "+pctTxt(c)+"</span>"; }
+function fmtRaw(p,u){ return typeof p==="string" ? p.replace("W","万") : (u==="E" ? p+"亿" : p+"万"); }
+function fmtWan(v){ return v>=10000 ? parseFloat((v/10000).toFixed(2))+"亿" : parseFloat(v.toFixed(2))+"万"; }
+
+function spark(wan){
+  const W=240,H=44,pad=7;
+  const mn=Math.min(...wan), mx=Math.max(...wan), rg=(mx-mn)||1;
+  const k=cls((wan[wan.length-1]-wan[0])/wan[0]*100);
+  const pts = wan.map((v,i)=>[ pad+i*(W-2*pad)/(wan.length-1), H-pad-((v-mn)/rg)*(H-2*pad) ]);
+  const pl = pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const dots = pts.map(p=>'<circle class="td" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="3"/>').join("");
+  return '<svg class="'+k+'" viewBox="0 0 '+W+' '+H+'"><polyline class="tl" points="'+pl+
+         '" stroke-width="2"/>'+dots+"</svg>";
+}
+
+function bigChart(it){
+  const W=720,H=300,L=92,R=34,T=36,B=46;
+  const wan=it.wan, n=wan.length;
+  const mn=Math.min(...wan), mx=Math.max(...wan);
+  const pad=(mx-mn)||Math.max(Math.abs(mx)*0.08,1);
+  const lo=Math.max(0,mn-pad), hi=mx+pad;
+  const X=i=>L+i*(W-L-R)/(n-1);
+  const Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
+  const k=cls(it.change);
+  let grid="", ylab="";
+  const steps=4;
+  for(let s=0;s<=steps;s++){
+    const v=lo+(hi-lo)*s/steps, y=Y(v);
+    grid+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="rgba(128,140,170,.18)" stroke-width="1"/>';
+    ylab+='<text x="'+(L-10)+'" y="'+(y+4)+'" text-anchor="end" class="ax">'+fmtWan(v)+"</text>";
+  }
+  const pts = wan.map((v,i)=>[X(i),Y(v)]);
+  const pl = pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+  const area = "M"+pts[0][0].toFixed(1)+","+Y(lo).toFixed(1)+" L"+
+    pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" L ")+" L"+
+    pts[n-1][0].toFixed(1)+","+Y(lo).toFixed(1)+" Z";
+  const dots = pts.map((p,i)=>{
+    const a = i===0 ? "start" : (i===n-1 ? "end" : "middle");
+    return '<circle class="td" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="4.5" stroke="var(--pointstroke)" stroke-width="2"/>'+
+      '<text x="'+p[0].toFixed(1)+'" y="'+(p[1]-12).toFixed(1)+
+      '" text-anchor="'+a+'" class="pv">'+fmtWan(wan[i])+"</text>";
+  }).join("");
+  const xlab = DATES.map((d,i)=>'<text x="'+X(i).toFixed(1)+'" y="'+(H-B+26)+'" text-anchor="middle" class="ax">'+d+"</text>").join("");
+  const gid="g"+it.idx;
+  return '<svg viewBox="0 0 '+W+' '+H+'" class="big '+k+'"><defs><linearGradient id="'+gid+
+    '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--tc);stop-opacity:.26"/>'+
+    '<stop offset="1" style="stop-color:var(--tc);stop-opacity:0"/></linearGradient></defs>'+
+    grid+ylab+'<path d="'+area+'" fill="url(#'+gid+')"/>'+
+    '<polyline class="tl" points="'+pl+'" stroke-width="2.5"/>'+
+    dots+xlab+"</svg>";
+}
+
+function hit(it,q){
+  const s=q.toLowerCase();
+  return it.name.toLowerCase().includes(s) || it.py.includes(s) || it.cat.toLowerCase().includes(s);
+}
+
+function currentList(){
+  return items.filter(it=>{
+    if(state.cat!=="全部" && it.cat!==state.cat) return false;
+    if(state.unit!=="全部" && it.unit!==state.unit) return false;
+    if(state.q && !hit(it,state.q)) return false;
+    return true;
+  });
+}
+const SORTS = {
+  def:(a,b)=>a.idx-b.idx,
+  up:(a,b)=>b.change-a.change,
+  down:(a,b)=>a.change-b.change,
+  vol:(a,b)=>Math.abs(b.change)-Math.abs(a.change),
+  price:(a,b)=>b.wan[b.wan.length-1]-a.wan[a.wan.length-1],
+  name:(a,b)=>a.name.localeCompare(b.name,"zh-Hans-CN")
+};
+
+function cardHTML(it){
+  const lastRaw = fmtRaw(it.prices[it.prices.length-1], it.unit);
+  return '<div class="card" data-i="'+it.idx+'">'+
+    '<div class="c1"><span class="nm">'+it.name+'</span><span class="un">'+(it.unit==="E"?"亿":"万")+"</span></div>"+
+    '<div class="c2">'+it.cat+"</div>"+
+    '<div class="c3">'+spark(it.wan)+"</div>"+
+    '<div class="c4"><span class="pv">'+lastRaw+"</span>"+badge(it.change)+"</div>"+
+    '<div class="c5">'+DATES.map((d,j)=>"<span>"+d+"<b>"+fmtRaw(it.prices[j],it.unit)+"</b></span>").join("")+"</div>"+
+  "</div>";
+}
+
+function renderGrid(){
+  const list = currentList().sort(SORTS[state.sort]);
+  $("#count").textContent = "共 "+list.length+" / "+items.length+" 件物品" + (state.q ? " · 关键词「"+state.q+"」" : "") + (state.cat!=="全部" ? " · 分类："+state.cat : "");
+  $("#grid").innerHTML = list.length
+    ? list.map(cardHTML).join("")
+    : '<div class="empty">没有找到匹配的物品，换个关键词试试～</div>';
+}
+
+function renderChips(){
+  const cats = ["全部", ...new Set(items.map(i=>i.cat))];
+  $("#chips").innerHTML = cats.map(c=>{
+    const n = c==="全部" ? items.length : items.filter(i=>i.cat===c).length;
+    return '<button class="chip'+(state.cat===c?" on":"")+'" data-c="'+c+'">'+c+"<b>"+n+"</b></button>";
+  }).join("");
+}
+
+function rrow(it,mx){
+  const w = Math.max(6, Math.abs(it.change)/mx*100);
+  return '<div class="rrow" data-i="'+it.idx+'">'+
+    '<span class="rname">'+it.name+"</span>"+
+    '<span class="rbar"><i class="'+cls(it.change)+'" style="width:'+w.toFixed(1)+'%"></i></span>'+
+    '<span class="rpct '+cls(it.change)+'">'+pctTxt(it.change)+"</span>"+
+    '<span class="rprice">'+fmtRaw(it.prices[it.prices.length-1],it.unit)+"</span></div>";
+}
+function renderRank(){
+  const ups = items.filter(i=>i.change>0.005).sort((a,b)=>b.change-a.change).slice(0,10);
+  const downs = items.filter(i=>i.change<-0.005).sort((a,b)=>a.change-b.change).slice(0,10);
+  const mU = Math.max(...ups.map(i=>i.change), 0.001);
+  const mD = Math.max(...downs.map(i=>Math.abs(i.change)), 0.001);
+  $("#rankUp").innerHTML = ups.length ? ups.map(i=>rrow(i,mU)).join("") : '<div class="rempty">暂无上涨物品</div>';
+  $("#rankDown").innerHTML = downs.length ? downs.map(i=>rrow(i,mD)).join("") : '<div class="rempty">暂无下跌物品</div>';
+}
+
+function renderKPI(){
+  const upN = items.filter(i=>cls(i.change)==="up").length;
+  const downN = items.filter(i=>cls(i.change)==="down").length;
+  const flatN = items.length-upN-downN;
+  const avgV = (items.reduce((s,i)=>s+Math.abs(i.change),0)/items.length).toFixed(1);
+  $("#kpis").innerHTML =
+    '<div class="kpi"><div class="kt">📦 追踪物品</div><div class="kv">'+items.length+"<span>件</span></div></div>"+
+    '<div class="kpi"><div class="kt">🗓 数据期数</div><div class="kv">'+DATES.length+"<span>期</span></div></div>"+
+    '<div class="kpi"><div class="kt up">▲ 上涨物品</div><div class="kv up">'+upN+"<span>件</span></div></div>"+
+    '<div class="kpi"><div class="kt down">▼ 下跌物品</div><div class="kv down">'+downN+"<span>件</span></div></div>"+
+    '<div class="kpi"><div class="kt">— 持平物品</div><div class="kv">'+flatN+"<span>件</span></div></div>"+
+    '<div class="kpi"><div class="kt">📊 平均波动幅度</div><div class="kv">±'+avgV+"<span>%</span></div></div>";
+}
+
+/* 弹窗 */
+function openModal(it){
+  let rows="";
+  for(let i=0;i<DATES.length;i++){
+    let d="—", c="flat";
+    if(i>0){
+      const pc=(it.wan[i]-it.wan[i-1])/it.wan[i-1]*100;
+      d=pctTxt(pc); c=cls(pc);
+    }
+    rows+="<tr><td>"+DATES[i]+"</td><td>"+fmtRaw(it.prices[i],it.unit)+'</td><td class="'+c+'">'+d+"</td></tr>";
+  }
+  $("#modal").innerHTML =
+    '<button class="x" onclick="closeModal()">✕</button>'+
+    '<div class="mh"><div><div class="mt">'+it.name+'<span class="un">'+(it.unit==="E"?"亿":"万")+"</span></div>"+
+    '<div class="mc">'+it.cat+" · 共 "+DATES.length+' 期</div></div>'+badge(it.change)+"</div>"+
+    bigChart(it)+
+    '<table class="dt"><thead><tr><th>日期</th><th>价格</th><th>较上期</th></tr></thead><tbody>'+rows+"</tbody></table>"+
+    '<div class="mnote">统一换算：'+it.wan.map((v,i)=>DATES[i]+" = "+fmtWan(v)).join(" · ")+"</div>";
+  $("#mask").classList.add("show");
+  document.body.style.overflow="hidden";
+}
+function closeModal(){ $("#mask").classList.remove("show"); document.body.style.overflow=""; }
+
+/* 事件 */
+$("#grid").addEventListener("click",e=>{ const c=e.target.closest(".card"); if(c) openModal(items[+c.dataset.i]); });
+$("#rankUp").addEventListener("click",e=>{ const c=e.target.closest(".rrow"); if(c) openModal(items[+c.dataset.i]); });
+$("#rankDown").addEventListener("click",e=>{ const c=e.target.closest(".rrow"); if(c) openModal(items[+c.dataset.i]); });
+$("#chips").addEventListener("click",e=>{
+  const b=e.target.closest(".chip"); if(!b) return;
+  state.cat=b.dataset.c; renderChips(); renderGrid();
+});
+$("#search").addEventListener("input",e=>{ state.q=e.target.value.trim(); renderGrid(); });
+$("#unitSel").addEventListener("change",e=>{ state.unit=e.target.value; renderGrid(); });
+$("#sortSel").addEventListener("change",e=>{ state.sort=e.target.value; renderGrid(); });
+$("#mask").addEventListener("click",e=>{ if(e.target===$("#mask")) closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+
+/* 主题切换（记忆用户偏好，默认深色） */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("themeBtn").textContent = t==="light" ? "🌙" : "☀️";
+}
+(function(){
+  const btn=document.getElementById("themeBtn");
+  let saved="light";
+  try{ saved=localStorage.getItem("priceboard-theme") || "light"; }catch(e){}
+  applyTheme(saved);
+  btn.addEventListener("click",()=>{
+    const cur=document.documentElement.getAttribute("data-theme")==="light" ? "dark" : "light";
+    applyTheme(cur);
+    try{ localStorage.setItem("priceboard-theme", cur); }catch(e){}
+  });
+})();
+
+/* ── 币价走势独立面板 ── */
+function renderCoin(days){
+  const n=Math.min(days,COIN.length);
+  const ds=COIN_DATES.slice(-n), vs=COIN.slice(-n);
+  const first=vs[0], last=vs[vs.length-1];
+  const chg=(last-first)/first*100, k=cls(chg);
+  $("#coinKpi").innerHTML =
+    '<div class="cpk">当前（'+ds[ds.length-1]+'）<b>'+last+'</b></div>'+
+    '<div class="cpk">期间涨跌<b class="'+k+'">'+(chg>0?"+":"")+chg.toFixed(2)+'%</b></div>'+
+    '<div class="cpk">期间最高<b>'+Math.max(...vs)+'</b></div>'+
+    '<div class="cpk">期间最低<b>'+Math.min(...vs)+'</b></div>';
+  const W=1160,H=200,L=64,R=26,T=18,B=36;
+  const mn=Math.min(...vs), mx=Math.max(...vs);
+  const pad=(mx-mn)||Math.max(mx*0.004,0.5);
+  const lo=mn-pad, hi=mx+pad;
+  const X=i=>L+i*(W-L-R)/(vs.length-1);
+  const Y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
+  let grid="",ax="";
+  for(let s=0;s<=4;s++){
+    const v=lo+(hi-lo)*s/4, y=Y(v);
+    grid+='<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="var(--dash)" stroke-width="1" stroke-dasharray="4 5"/>';
+    ax+='<text class="ax" x="'+(L-10)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end">'+v.toFixed(1)+'</text>';
+  }
+  const step=Math.ceil(vs.length/8);
+  ds.forEach((d,i)=>{
+    if(i%step===0||i===ds.length-1)
+      ax+='<text class="ax" x="'+X(i).toFixed(1)+'" y="'+(H-B+24)+'" text-anchor="middle">'+d+'</text>';
+  });
+  const pl=vs.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
+  const dots=vs.map((v,i)=>'<circle class="td" cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="'+(i===vs.length-1?5:3.5)+'"/>').join("");
+  /* 每个数据点显示数值标签，上下交错防重叠；末点加粗醒目 */
+  const lbls=vs.map((v,i)=>{
+    const lastPt=i===vs.length-1;
+    const y=Y(v)+(i%2===0||lastPt?-10:20);
+    return '<text class="pv" x="'+X(i).toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="middle"'+(lastPt?"":' style="font-size:11px;opacity:.85"')+'>'+v+'</text>';
+  }).join("");
+  $("#coinBig").innerHTML='<svg class="big '+k+'" viewBox="0 0 '+W+' '+H+'">'+grid+ax+
+    '<polyline class="tl" points="'+pl+'"/>'+dots+lbls+'</svg>';
+}
+renderCoin(30);
+$("#coinTabs").addEventListener("click",e=>{
+  const b=e.target.closest(".cptab"); if(!b) return;
+  document.querySelectorAll(".cptab").forEach(t=>t.classList.toggle("on",t===b));
+  renderCoin(+b.dataset.days);
+});
+renderKPI(); renderRank(); renderChips(); renderGrid();
+</script>
+</body>
+</html>
