@@ -4,14 +4,22 @@
 
 ## 在线访问
 
-🔗 **线上地址**：<https://wj.ores.cc>
+🔗 **主站**：<https://game-price-board.app.workbuddy.host>
+🔗 **镜像站**：<https://wj.ores.cc>
 
-托管于 **EdgeOne Pages（Makers）海外区**
+两个地址指向的是**同一份内容**，可任选其一访问。
+
+| 地址 | 托管方 | 说明 |
+|---|---|---|
+| <https://game-price-board.app.workbuddy.host> | WorkBuddy 应用托管 | 主站，对外分享用这个 |
+| <https://wj.ores.cc> | EdgeOne Pages（海外区） | 镜像 / 技术备份 |
+
+**EdgeOne 侧明细**
 - 项目名 `game-price-board`，Project ID `makers-zrrxfmmcxb1t`
 - 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
 - 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
 
-> 历史备用地址（已停更，勿用）：`98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link`
+> ⛔ **已废弃、勿再使用**：`98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link`（旧版，数据停在 9.8）
 
 ## 功能特性
 
@@ -43,12 +51,12 @@
 
 ### 仓库拓扑
 
-| 远程名 | 位置 | 说明 |
+| 远程名 | 位置 | 可见性 |
 |---|---|---|
-| `origin` | CNB `yume-2026/git-poe/game-price-board` | 主仓（Private），历史提交在这里 |
-| `github` | GitHub `poe112233/game-price-board` | 镜像备份（Private） |
+| `origin` | <https://cnb.cool/yume-2026/git-poe/game-price-board> | Private |
+| `github` | <https://github.com/poe112233/game-price-board> | **Public** |
 
-两边保持同一条历史线，`git push origin main && git push github main` 即可。
+两边保持同一条历史线，`git push origin main && git push github main` 即可。`tools/deploy.sh` 会自动推送到这两个远程。
 
 ### 一键操作
 
@@ -66,6 +74,10 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 3. 用 EdgeOne CLI 直接部署到 `game-price-board` 项目生产环境
 4. 把变更提交并推送到 `origin`(CNB) 与 `github` 两个远程
 5. 轮询线上站点，确认数据周期已收敛（CDN 有缓存，需重试几次）
+
+> ⚠️ **关于主站**：`game-price-board.app.workbuddy.host` 走的是 WorkBuddy 应用托管，**没有命令行通道**，只能在 WorkBuddy 对话里用「发布为应用」重新发布。
+> 所以完整的发版流程是：**跑 `deploy.sh`（EdgeOne 镜像 + 双推） → 再让 Agent 重新发布一次 WorkBuddy 应用（主站）**。
+> 只跑脚本的话，主站会停留在上一版。
 
 ### 凭据
 
