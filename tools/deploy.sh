@@ -103,15 +103,19 @@ fi
 if [ "$MODE" = "full" ]; then
   c_step "B. 部署到 EdgeOne Pages"
 
+  # 令牌刻意放在项目目录之外：WorkBuddy 发布是整目录上传，
+  # 放在项目里会被当成静态资源公开出去。
+  AUTH_JSON="$HOME/.workbuddy/edgeone/game-price-board.json"
   TOKEN="${EDGEONE_PAGES_API_TOKEN:-}"
-  if [ -z "$TOKEN" ] && [ -f "$REPO_ROOT/.edgeone/auth.json" ]; then
-    # 注意：必须用相对路径——MSYS 的 /c/... 路径 Windows 版 Python 不认
-    TOKEN="$(cd "$REPO_ROOT" && python -c "import json;print(json.load(open('.edgeone/auth.json'))['EDGEONE_PAGES_API_TOKEN'])" 2>/dev/null)"
-    [ -n "$TOKEN" ] && c_ok "凭据来源: ./.edgeone/auth.json"
+  if [ -z "$TOKEN" ] && [ -f "$AUTH_JSON" ]; then
+    TOKEN="$("C:/Users/10493/.workbuddy/binaries/python/versions/3.13.12/python.exe" -c \
+      "import json,sys;print(json.load(open(sys.argv[1]))['EDGEONE_PAGES_API_TOKEN'])" \
+      "$(cygpath -w "$AUTH_JSON")" 2>/dev/null)"
+    [ -n "$TOKEN" ] && c_ok "凭据来源: $AUTH_JSON"
   fi
   if [ -z "$TOKEN" ]; then
     c_err "找不到 EdgeOne 令牌。请设置环境变量 EDGEONE_PAGES_API_TOKEN，"
-    c_err "或把 JSON 写入 ./.edgeone/auth.json（键名 EDGEONE_PAGES_API_TOKEN）"
+    c_err "或把 JSON 写入 $AUTH_JSON（键名 EDGEONE_PAGES_API_TOKEN）"
     exit 1
   fi
 

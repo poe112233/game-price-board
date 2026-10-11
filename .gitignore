@@ -1,8 +1,9 @@
 node_modules/
 package-lock.json
 
-# 本地凭据，绝不入库
-.edgeone/
+# 本地凭据，绝不入库。
+# 注意：EdgeOne 令牌已迁到项目目录之外（~/.workbuddy/edgeone/），
+# 因为 WorkBuddy 发布是整目录上传，放在项目里会被当作静态资源公开。
 .env
 .env.local
 

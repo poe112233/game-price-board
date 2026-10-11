@@ -4,17 +4,27 @@
 
 ## 在线访问
 
-🔗 **线上地址**：<https://wj.ores.cc>
+站点有三个入口，状态各不相同，**别混用**：
+
+| 地址 | 承载方式 | 我方能否更新 | 当前数据 |
+|---|---|---|---|
+| <https://game-price-board-28438.app.workbuddy.host> | WorkBuddy 应用（`wbapp_Kd0rD6gY15PTAGrPEwMLqb`） | ✅ 能 | **10.10** |
+| <https://wj.ores.cc> | EdgeOne Pages（Makers 海外区） | ✅ 能 | 9.21（待更新） |
+| <https://game-price-board.app.workbuddy.host> | WorkBuddy 遗留应用 | ❌ 不能 | 9.21（卡住） |
+
+> ⚠️ **`game-price-board.app.workbuddy.host` 为什么更新不了**
+> 它是**在另一台已停用的电脑上发布的旧应用**。本机 `applications.yaml`、部署历史、会话应用列表（`workbuddy_cloud_service inspect` 只返回 1 个应用）里**都查不到它**，因此本机的发布通道无法指向它。
+> 更关键的是：**发布目标由「本地目录」决定，不由人指定** —— `workbuddy_sites_deploy` 只会把本项目目录映射到 `wbapp_Kd0rD6gY15PTAGrPEwMLqb`（即 `-28438` 那个应用）。所以只要那个旧应用还占着 `game-price-board` 这个域名前缀，我们就拿不到这个地址。
+> **要拿回这个域名**：需在 WorkBuddy「设置—数据管理—应用」里把它删除，释放域名前缀后，再用一个全新目录 + `domainPrefix=game-price-board` 新建应用。
+
+### 关于 wj.ores.cc
 
 托管于 **EdgeOne Pages（Makers）海外区**
 - 项目名 `game-price-board`，Project ID `makers-zrrxfmmcxb1t`
 - 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
 - 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
 
-> ⚠️ **为什么不用 `game-price-board.app.workbuddy.host`**
-> 那个地址虽然能访问，但它是**在另一台已停用的电脑上、用另一个 WorkBuddy 账号发布的旧应用**，本机与当前账号都查不到它的记录，**无法更新也无法删除**。它随时可能失效（账号停用即消失）。
-> 同理 `98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link`（数据停在 9.8）也是遗留物。
-> **对外分享、写进文档一律用 `wj.ores.cc`。**
+> 该域名是否继续作为对外主站**尚未定论**（待与 `.app.workbuddy.host` 的归属一起决定）。
 
 ## 功能特性
 
@@ -42,7 +52,7 @@
 ## 部署与同步流程
 
 > ⚠️ **本项目不使用任何 CI/CD 流水线。** 由本地直接部署，再同步到两个代码仓库。
-> （旧 `.cnb.yml` 流水线已废弃删除：它依赖仓库环境变量 `EDGEONE_API_TOKEN`，从未配置，导致 2026-09-13 起每次 push 的构建都静默失败，9.10 / 9.21 两轮数据更新因此漏上线整整一个月。）
+> （旧 `.cnb.yml` 流水线已废弃：它依赖仓库环境变量 `EDGEONE_API_TOKEN`，从未配置，导致 2026-09-13 起每次 push 的构建都静默失败，9.10 / 9.21 两轮数据更新因此漏上线。）
 
 ### 仓库拓扑
 
@@ -51,7 +61,10 @@
 | `origin` | <https://cnb.cool/yume-2026/git-poe/game-price-board> | Private |
 | `github` | <https://github.com/poe112233/game-price-board> | **Public** |
 
-两边保持同一条历史线，`git push origin main && git push github main` 即可。`tools/deploy.sh` 会自动推送到这两个远程。
+两边保持同一条历史线。`tools/deploy.sh` 会自动推送到这两个远程。
+
+> ⚠️ **GitHub 推送的临时绕行**：用户手上的细粒度令牌目前返回 `401 Bad credentials`（格式本身合规：93 字符 = 11 + 22 + 1 + 59），因此 `git push github` 不可用。
+> 应急通道是 **GitHub 连接器**（以 `poe112233` 身份 OAuth 授权，已验证可读可写）。代价：连接器直推会在 GitHub 侧产生一个独立提交，与本地历史分叉，之后需要 `git fetch github && git merge` 收敛。**长期应换回可用令牌。**
 
 ### 一键操作
 
@@ -70,14 +83,20 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 4. 把变更提交并推送到 `origin`(CNB) 与 `github` 两个远程
 5. 轮询线上站点，确认数据周期已收敛（CDN 有缓存，需重试几次）
 
-> ✅ **发版只需一条命令**：`bash tools/deploy.sh` 跑完，线上站（`wj.ores.cc`）、CNB、GitHub 三处就是最新的。
-> 本项目**不涉及** WorkBuddy 应用托管（历史遗留的 `.app.workbuddy.host` 地址不在我们控制内，见上文说明）。
+### 发布到 WorkBuddy 应用
+
+```bash
+# 由 AI 调用 workbuddy_sites_deploy，directory 固定为项目根
+# → 目标应用固定为 wbapp_Kd0rD6gY15PTAGrPEwMLqb → game-price-board-28438.app.workbuddy.host
+```
+
+⚠️ **发布前必须确认项目根目录内没有密钥文件**。WorkBuddy 发布是**整目录上传**，只有 `.git` / `node_modules` / 构建产物被排除，`.edgeone/auth.json` 这类文件**会被当作静态资源公开**。EdgeOne 令牌已因此移出项目目录（见下表）。
 
 ### 凭据
 
 | 用途 | 位置 | 备注 |
 |---|---|---|
-| EdgeOne 部署令牌 | 环境变量 `EDGEONE_PAGES_API_TOKEN` 或 `./.edgeone/auth.json` | 已 gitignore |
+| EdgeOne 部署令牌 | 环境变量 `EDGEONE_PAGES_API_TOKEN`，或 `~/.workbuddy/edgeone/game-price-board.json` | **已移出项目目录**，避免被整目录发布带出去 |
 | CNB / GitHub 推送 | 内嵌在 `.git/config` 的 remote URL | 不入库 |
 
 脚本会自动绕过本机残留代理（`NO_PROXY=*`），并清空 git 凭据助手——沙箱里凭据助手子进程会被终止，必须用「令牌内嵌 URL + `credential.helper=""`」这一组合。
@@ -88,7 +107,7 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 
 | 数组 | 含义 | 新增方式 |
 |---|---|---|
-| `DATES` | 价格快照日期（如 `["8.15","8.23","9.5","9.21"]`） | 末尾追加日期 |
+| `DATES` | 价格快照日期（如 `["8.15","8.23","9.5","9.21","10.10"]`） | 末尾追加日期 |
 | `RAW` | 物品清单 `["名称","分类","单位W/E",[各期价格]]` | 每个物品的 `prices` 数组末尾追加该期价格 |
 | `COIN_DATES` | 币价日期（逐日） | 末尾追加日期 |
 | `COIN` | 出币价（逐日） | 末尾追加当日币价 |
@@ -97,4 +116,4 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 
 ## 数据更新
 
-数据更新至 **9.21**，持续更新中。
+数据更新至 **10.10**，持续更新中。
