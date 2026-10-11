@@ -105,7 +105,8 @@ if [ "$MODE" = "full" ]; then
 
   TOKEN="${EDGEONE_PAGES_API_TOKEN:-}"
   if [ -z "$TOKEN" ] && [ -f "$REPO_ROOT/.edgeone/auth.json" ]; then
-    TOKEN="$(python -c "import json;print(json.load(open(r'$REPO_ROOT/.edgeone/auth.json'))['EDGEONE_PAGES_API_TOKEN'])" 2>/dev/null)"
+    # 注意：必须用相对路径——MSYS 的 /c/... 路径 Windows 版 Python 不认
+    TOKEN="$(cd "$REPO_ROOT" && python -c "import json;print(json.load(open('.edgeone/auth.json'))['EDGEONE_PAGES_API_TOKEN'])" 2>/dev/null)"
     [ -n "$TOKEN" ] && c_ok "凭据来源: ./.edgeone/auth.json"
   fi
   if [ -z "$TOKEN" ]; then
