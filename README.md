@@ -4,22 +4,17 @@
 
 ## 在线访问
 
-🔗 **主站**：<https://game-price-board.app.workbuddy.host>
-🔗 **镜像站**：<https://wj.ores.cc>
+🔗 **线上地址**：<https://wj.ores.cc>
 
-两个地址指向的是**同一份内容**，可任选其一访问。
-
-| 地址 | 托管方 | 说明 |
-|---|---|---|
-| <https://game-price-board.app.workbuddy.host> | WorkBuddy 应用托管 | 主站，对外分享用这个 |
-| <https://wj.ores.cc> | EdgeOne Pages（海外区） | 镜像 / 技术备份 |
-
-**EdgeOne 侧明细**
+托管于 **EdgeOne Pages（Makers）海外区**
 - 项目名 `game-price-board`，Project ID `makers-zrrxfmmcxb1t`
 - 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
 - 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
 
-> ⛔ **已废弃、勿再使用**：`98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link`（旧版，数据停在 9.8）
+> ⚠️ **为什么不用 `game-price-board.app.workbuddy.host`**
+> 那个地址虽然能访问，但它是**在另一台已停用的电脑上、用另一个 WorkBuddy 账号发布的旧应用**，本机与当前账号都查不到它的记录，**无法更新也无法删除**。它随时可能失效（账号停用即消失）。
+> 同理 `98762c0e60af4ab7a1844f0627f6f35c.app.workbuddy.link`（数据停在 9.8）也是遗留物。
+> **对外分享、写进文档一律用 `wj.ores.cc`。**
 
 ## 功能特性
 
@@ -75,9 +70,8 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 4. 把变更提交并推送到 `origin`(CNB) 与 `github` 两个远程
 5. 轮询线上站点，确认数据周期已收敛（CDN 有缓存，需重试几次）
 
-> ⚠️ **关于主站**：`game-price-board.app.workbuddy.host` 走的是 WorkBuddy 应用托管，**没有命令行通道**，只能在 WorkBuddy 对话里用「发布为应用」重新发布。
-> 所以完整的发版流程是：**跑 `deploy.sh`（EdgeOne 镜像 + 双推） → 再让 Agent 重新发布一次 WorkBuddy 应用（主站）**。
-> 只跑脚本的话，主站会停留在上一版。
+> ✅ **发版只需一条命令**：`bash tools/deploy.sh` 跑完，线上站（`wj.ores.cc`）、CNB、GitHub 三处就是最新的。
+> 本项目**不涉及** WorkBuddy 应用托管（历史遗留的 `.app.workbuddy.host` 地址不在我们控制内，见上文说明）。
 
 ### 凭据
 
