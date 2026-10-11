@@ -195,7 +195,12 @@ if [ "$MODE" = "full" ] || [ "$MODE" = "sync" ]; then
   if git diff --cached --quiet; then
     c_ok "无文件变更，跳过提交"
   else
-    MSG="chore(data): 物价快照更新至 ${LOCAL_P##*-}，本地直部署"
+    STAGED="$(git diff --cached --name-only | tr '\n' ' ')"
+    if printf '%s' "$STAGED" | grep -q 'index.html'; then
+      MSG="chore(data): 物价快照更新至 ${LOCAL_P##*-}，本地直部署"
+    else
+      MSG="chore: 同步仓库变更（$(printf '%s' "$STAGED" | sed 's/ *$//')）"
+    fi
     if [ "$MODE" = "dry" ]; then
       c_warn "演练模式，跳过提交: $MSG"
     else
