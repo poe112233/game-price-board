@@ -10,8 +10,13 @@
 #    bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 #
 #  凭据来源（按优先级）：
-#    EdgeOne : 环境变量 EDGEONE_PAGES_API_TOKEN → ./.edgeone/auth.json
-#    Git     : 内嵌在 .git/config 的 remote URL 里（不入库）
+#    EdgeOne : 环境变量 EDGEONE_PAGES_API_TOKEN → ~/.workbuddy/edgeone/game-price-board.json
+#    Git-CNB : 内嵌在 .git/config 的 origin remote URL 里（不入库）
+#    Git-GH  : ~/.workbuddy/github/game-price-board.json（现有令牌已 401，见 README）
+#
+#  ⚠️ 脚本只负责「EdgeOne 部署 + 双仓库推送」。
+#     WorkBuddy 主站（MAIN_URL）需由 AI 单独调用 workbuddy_sites_deploy 发布 MIRROR_DIR，
+#     脚本仅做镜像目录一致性同步，并对主站做校验。
 # ============================================================
 
 set -uo pipefail
@@ -20,7 +25,9 @@ PROJECT_NAME="game-price-board"
 PROJECT_ID="makers-zrrxfmmcxb1t"
 EDGEONE_AREA="overseas"
 EDGEONE_ENV="production"
-LIVE_URL="https://wj.ores.cc/"
+LIVE_URL="https://wj.ores.cc/"                               # EdgeOne 备用入口（脚本直接部署）
+MAIN_URL="https://dk-game-price-board.app.workbuddy.host/"   # WorkBuddy 主站（AI 发布 dk-price/）
+MIRROR_DIR="C:/Users/10493/WorkBuddy/dk-price"               # 主站镜像目录，必须与 index.html 一致
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
@@ -97,6 +104,18 @@ if [ "$MODE" = "full" ] || [ "$MODE" = "dry" ]; then
     [ -f "$f" ] && cp "$f" "$DIST/" && c_ok "打包 $f"
   done
   c_ok "dist 内容: $(ls "$DIST" | tr '\n' ' ')"
+
+  # 同步 WorkBuddy 主站镜像目录，避免两处 index.html 漂移
+  if [ -d "$(dirname "$MIRROR_DIR")" ]; then
+    mkdir -p "$MIRROR_DIR"
+    if cmp -s index.html "$MIRROR_DIR/index.html"; then
+      c_ok "主站镜像已是最新: $MIRROR_DIR/index.html"
+    else
+      cp index.html "$MIRROR_DIR/index.html" && c_ok "已同步主站镜像: $MIRROR_DIR/index.html"
+    fi
+  else
+    c_warn "镜像目录不存在，跳过：$MIRROR_DIR"
+  fi
 fi
 
 # ---------- 阶段 B：部署到 EdgeOne Pages ----------
@@ -204,6 +223,15 @@ if [ "$MODE" = "full" ] && [ "${DEPLOY_RC:-1}" -eq 0 ]; then
       echo "============================================"
       echo " ✅ 部署完成： $LIVE_URL"
       echo "============================================"
+
+      # WorkBuddy 主站一致性与线上版本校验
+      MP="$(curl -s --noproxy '*' -m 25 -H 'Cache-Control: no-cache' \
+             "${MAIN_URL}?_cb=$RANDOM$RANDOM" | grep -oE '8\.[0-9]+-[0-9]+\.[0-9]+' | head -1)"
+      if [ "$MP" = "$EXPECT" ]; then
+        c_ok "WorkBuddy 主站已同步: $MAIN_URL ($MP)"
+      else
+        c_warn "WorkBuddy 主站线上为 ${MP:-不可达}，需由 AI 发布 $MIRROR_DIR 目录后才能生效"
+      fi
       exit 0
     fi
     c_warn "第 $i 次探测：线上 $GOT（期望 $EXPECT），CDN 可能仍在刷新…"

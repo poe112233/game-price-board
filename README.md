@@ -4,18 +4,30 @@
 
 ## 在线访问
 
-站点有三个入口，状态各不相同，**别混用**：
+站点有两个可用入口：
 
-| 地址 | 承载方式 | 我方能否更新 | 当前数据 |
+| 地址 | 承载方式 | 状态 | 当前数据 |
 |---|---|---|---|
-| <https://game-price-board-28438.app.workbuddy.host> | WorkBuddy 应用（`wbapp_Kd0rD6gY15PTAGrPEwMLqb`） | ✅ 能 | **10.10** |
-| <https://wj.ores.cc> | EdgeOne Pages（Makers 海外区） | ✅ 能 | **10.10** |
-| <https://game-price-board.app.workbuddy.host> | WorkBuddy 遗留应用 | ❌ 不能 | 9.21（卡住） |
+| **<https://dk-game-price-board.app.workbuddy.host/>** | WorkBuddy 应用（`wbapp_fVLn3065PYBq1apGj7hetI`） | ✅ **主站** | **10.10** |
+| <https://wj.ores.cc> | EdgeOne Pages（Makers 海外区） | ✅ 备用 | **10.10** |
+| ~~<https://game-price-board.app.workbuddy.host>~~ | 旧遗留应用（已删除） | ❌ **永久不可用** | — |
 
-> ⚠️ **`game-price-board.app.workbuddy.host` 为什么更新不了**
-> 它是**在另一台已停用的电脑上发布的旧应用**。本机 `applications.yaml`、部署历史、会话应用列表（`workbuddy_cloud_service inspect` 只返回 1 个应用）里**都查不到它**，因此本机的发布通道无法指向它。
-> 更关键的是：**发布目标由「本地目录」决定，不由人指定** —— `workbuddy_sites_deploy` 只会把本项目目录映射到 `wbapp_Kd0rD6gY15PTAGrPEwMLqb`（即 `-28438` 那个应用）。所以只要那个旧应用还占着 `game-price-board` 这个域名前缀，我们就拿不到这个地址。
-> **要拿回这个域名**：需在 WorkBuddy「设置—数据管理—应用」里把它删除，释放域名前缀后，再用一个全新目录 + `domainPrefix=game-price-board` 新建应用。
+> ⭐ **为什么旧地址 `game-price-board.app.workbuddy.host` 再也拿不回来（2026-10-11 实测确证）**
+>
+> **WorkBuddy 的裸域名只在该前缀"从未被任何应用使用过"时才分配。前缀一旦被用过，就永久只能拿到 `前缀-5位随机数` 的形态 —— 删掉应用也回不来，没有冷却期，也没有任何接口可改。**
+>
+> | 请求的前缀 | 是否首次使用 | 实际拿到的域名 |
+> |---|---|---|
+> | `game-price-board` | ❌ 已被旧遗留应用用过 | `game-price-board-28438` / `game-price-board-00179` |
+> | `dk-game-price-board` | ✅ 全新 | **`dk-game-price-board`（裸域名）** |
+> | `oe-brand` / `oe-brand-gallery` | ✅ 首次使用 | 裸域名 |
+> | `link-translator` | ❌ 已被用过 | `link-translator-96457` |
+>
+> 附带现象：请求"已用过的前缀"时后端还会返回 `bindCloudService: backend returned an incomplete publicConfig`（平台缺陷），并已把应用建出来但不返回域名。
+>
+> **⇒ 结论：不要去抢已被使用过的前缀，换一个全新前缀（加账号缩写/日期）即可立刻拿到干净裸域名。**
+>
+> 另一个必须记住的点：**`workbuddy_sites_deploy` 是"整目录覆盖"，目标应用由本地目录/会话登记决定。任何探测目录都不得走发布通道，否则会顶掉线上内容。** 另外 `workbuddy_cloud_service activate` 创建应用时会重写会话登记表，**副作用是可能把上一个应用的发布踢下线**（`-00179` 就是这样变成 404 的），不要反复试探。
 
 ### 关于 wj.ores.cc
 
@@ -24,7 +36,7 @@
 - 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
 - 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
 
-> 该域名目前**仍在正常服务最新数据**；是否继续作为对外主站**尚未定论**（待与 `.app.workbuddy.host` 的归属一起决定）。
+> 该域名是**用户自有域名**，永远不会被平台收回，因此作为对外备用入口长期保留。
 
 ### ⚠️ 追加币价历史时必看：`COIN_DATES` 不能整段重写
 
@@ -76,12 +88,18 @@ assert len(set(D)) == len(D)
 
 两边保持同一条历史线。`tools/deploy.sh` 会自动推送到这两个远程。
 
-> ⚠️ **GitHub 推送当前不可用（2026-10-11 实测）**
-> 两条通道都试过，都不通：
-> 1. **PAT** —— 用户手上的细粒度令牌返回 `401 Bad credentials`（令牌格式本身合规：93 字符 = 11 + 22 + 1 + 59）；系统凭据管理器里存的旧经典令牌 `ghp_…` 同样 401。二者都不是权限问题，是令牌本身已失效。
-> 2. **GitHub 连接器** —— 以 `poe112233` 身份 OAuth 授权，**只读**：读取正常，但写入返回 `403 Resource not accessible by integration`（连 `create_or_update_file` 写一个临时探针文件也被拒）。GitHub App 安装未授予 `Contents: write`。
+> ⚠️ **GitHub 推送当前不可用（2026-10-11 19:45 实测）**
 >
-> **恢复方式（任选其一）**：① 重新生成一个「Contents: Read and write」的细粒度令牌，填进 `.git/config` 的 `github` remote；② 在 GitHub 上给该连接器的 App 安装补上 `Contents: Read and write` 权限。
+> 仓库存在且为 **Public**（未认证调 `https://api.github.com/repos/poe112233/game-price-board` 即返回 200，`private: false`），问题**纯粹是"没有可用写凭据"**：
+> 1. **细粒度 PAT** —— 手上这枚返回 `401 Bad credentials`。格式本身合规（93 字符 = `11` + 22 + 1 + 59），所以**不是权限问题，是令牌已失效/被撤销/过期**。
+> 2. **系统凭据管理器里的旧经典令牌** `ghp_…`（40 位）—— 同样 401。
+> 3. **GitHub 连接器** —— 以 `poe112233` 身份 OAuth 授权，**只读**：读取正常，但写入返回 `403 Resource not accessible by integration`。App 安装未授予 `Contents: write`。
+>
+> **恢复方式（任选其一）**：
+> ① **新建一枚细粒度令牌**：github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token；Repository access 选 **Only select repositories → `poe112233/game-price-board`**，Permissions → Repository permissions → **Contents: Read and write**，Expiration 建议 ≥ 90 天。生成后把 `github_pat_…` 交给 AI，由 AI 写入 `~/.workbuddy/github/game-price-board.json`（**项目目录之外**）。
+> ② 或在 GitHub 上给该连接器的 App 安装补上 `Contents: Read and write` 权限。
+>
+> ⚠️ **不要把令牌写进 `.git/config` 的 remote URL**（历史上就是这么做的）。虽然 `.git` 不参与推送、不会泄露到仓库，但明文落盘仍是隐患。正确做法：令牌存在项目外的凭据文件里，推送时用 `git -c http.extraheader="Authorization: Basic <base64(user:token)>"` 临时注入。
 >
 > 在此之前，`bash tools/deploy.sh` 的 GitHub 环节会失败并给出告警，**CNB 与线上部署不受影响**（脚本把两个远程分开处理，一个失败不影响另一个）。
 
@@ -105,9 +123,15 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 ### 发布到 WorkBuddy 应用
 
 ```bash
-# 由 AI 调用 workbuddy_sites_deploy，directory 固定为项目根
-# → 目标应用固定为 wbapp_Kd0rD6gY15PTAGrPEwMLqb → game-price-board-28438.app.workbuddy.host
+# 由 AI 调用 workbuddy_sites_deploy
+# directory     = C:\Users\10493\WorkBuddy\dk-price   （主站的镜像目录）
+# domainPrefix  = dk-game-price-board
+# → 目标应用 wbapp_fVLn3065PYBq1apGj7hetI → https://dk-game-price-board.app.workbuddy.host/
 ```
+
+主站采用**"镜像目录 + 独立应用"**结构：`dk-price/` 是 `index.html` 的镜像副本（与项目根的文件逐字节一致，当前 46303 B / MD5 `4783d249ba6cd2c137b19d0e29cb9c56`），发布只认这个目录。这样做是为了把"发布通道"与"代码仓库目录"解耦——项目根目录里含 `.git`、`node_modules`、`tools/`，绝不整目录上传。
+
+**数据更新后，要让主站生效，必须同时更新两处 `index.html`**（项目根 + `dk-price/`），然后发布 `dk-price/`。
 
 ⚠️ **发布前必须确认项目根目录内没有密钥文件**。WorkBuddy 发布是**整目录上传**，只有 `.git` / `node_modules` / 构建产物被排除，`.edgeone/auth.json` 这类文件**会被当作静态资源公开**。EdgeOne 令牌已因此移出项目目录（见下表）。
 
@@ -116,7 +140,8 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 | 用途 | 位置 | 备注 |
 |---|---|---|
 | EdgeOne 部署令牌 | 环境变量 `EDGEONE_PAGES_API_TOKEN`，或 `~/.workbuddy/edgeone/game-price-board.json` | **已移出项目目录**，避免被整目录发布带出去 |
-| CNB / GitHub 推送 | 内嵌在 `.git/config` 的 remote URL | 不入库 |
+| CNB 推送 | 内嵌在 `.git/config` 的 `origin` remote URL | 不入库（沙箱里 git 凭据助手会被 SIGTERM，只能"令牌内嵌 URL + `credential.helper=\"\"`"） |
+| GitHub 推送 | `~/.workbuddy/github/game-price-board.json`（**待补**） | 现有令牌已 401；**不要**再把令牌写进 remote URL |
 
 脚本会自动绕过本机残留代理（`NO_PROXY=*`），并清空 git 凭据助手——沙箱里凭据助手子进程会被终止，必须用「令牌内嵌 URL + `credential.helper=""`」这一组合。
 
