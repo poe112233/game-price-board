@@ -9,7 +9,7 @@
 | 地址 | 承载方式 | 我方能否更新 | 当前数据 |
 |---|---|---|---|
 | <https://game-price-board-28438.app.workbuddy.host> | WorkBuddy 应用（`wbapp_Kd0rD6gY15PTAGrPEwMLqb`） | ✅ 能 | **10.10** |
-| <https://wj.ores.cc> | EdgeOne Pages（Makers 海外区） | ✅ 能 | 9.21（待更新） |
+| <https://wj.ores.cc> | EdgeOne Pages（Makers 海外区） | ✅ 能 | **10.10** |
 | <https://game-price-board.app.workbuddy.host> | WorkBuddy 遗留应用 | ❌ 不能 | 9.21（卡住） |
 
 > ⚠️ **`game-price-board.app.workbuddy.host` 为什么更新不了**
@@ -24,7 +24,20 @@
 - 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
 - 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
 
-> 该域名是否继续作为对外主站**尚未定论**（待与 `.app.workbuddy.host` 的归属一起决定）。
+> 该域名目前**仍在正常服务最新数据**；是否继续作为对外主站**尚未定论**（待与 `.app.workbuddy.host` 的归属一起决定）。
+
+### ⚠️ 追加币价历史时必看：`COIN_DATES` 不能整段重写
+
+2026-10-11 发现过一次真实事故：把 10.10 并入时，脚本误以为 `COIN_DATES` 只到 9.8，于是从 `9.9` 又追加了一整段，结果数组变成 **72 项、`9.9`~`9.21` 各重复两次且整体乱序**。页面用 `COIN.slice(-n)` 取窗口，重复项会把「近 30 天」算成跨两个月的错位区间。
+
+正确做法：**先确认数组最后一项是哪天，只追加它之后的日期**，并断言不重复、严格升序：
+
+```python
+assert D == sorted(D, key=lambda s: [int(x) for x in s.split('.')])
+assert len(set(D)) == len(D)
+```
+
+现网基线：`COIN_DATES` / `COIN` 各 **59 项**，范围 `8.13 → 10.10`；`RAW` **205** 行；`DATES` 5 期。
 
 ## 功能特性
 
@@ -63,8 +76,14 @@
 
 两边保持同一条历史线。`tools/deploy.sh` 会自动推送到这两个远程。
 
-> ⚠️ **GitHub 推送的临时绕行**：用户手上的细粒度令牌目前返回 `401 Bad credentials`（格式本身合规：93 字符 = 11 + 22 + 1 + 59），因此 `git push github` 不可用。
-> 应急通道是 **GitHub 连接器**（以 `poe112233` 身份 OAuth 授权，已验证可读可写）。代价：连接器直推会在 GitHub 侧产生一个独立提交，与本地历史分叉，之后需要 `git fetch github && git merge` 收敛。**长期应换回可用令牌。**
+> ⚠️ **GitHub 推送当前不可用（2026-10-11 实测）**
+> 两条通道都试过，都不通：
+> 1. **PAT** —— 用户手上的细粒度令牌返回 `401 Bad credentials`（令牌格式本身合规：93 字符 = 11 + 22 + 1 + 59）；系统凭据管理器里存的旧经典令牌 `ghp_…` 同样 401。二者都不是权限问题，是令牌本身已失效。
+> 2. **GitHub 连接器** —— 以 `poe112233` 身份 OAuth 授权，**只读**：读取正常，但写入返回 `403 Resource not accessible by integration`（连 `create_or_update_file` 写一个临时探针文件也被拒）。GitHub App 安装未授予 `Contents: write`。
+>
+> **恢复方式（任选其一）**：① 重新生成一个「Contents: Read and write」的细粒度令牌，填进 `.git/config` 的 `github` remote；② 在 GitHub 上给该连接器的 App 安装补上 `Contents: Read and write` 权限。
+>
+> 在此之前，`bash tools/deploy.sh` 的 GitHub 环节会失败并给出告警，**CNB 与线上部署不受影响**（脚本把两个远程分开处理，一个失败不影响另一个）。
 
 ### 一键操作
 
@@ -117,3 +136,12 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 ## 数据更新
 
 数据更新至 **10.10**，持续更新中。
+
+| 数组 | 现网基线 |
+|---|---|
+| `DATES` | 5 期：8.15 / 8.23 / 9.5 / 9.21 / 10.10 |
+| `RAW` | 205 行物品 |
+| `COIN_DATES` / `COIN` | 各 59 项：8.13 → 10.10（10.10 出币价 **283.5**） |
+
+> 10.10 两列数据来源：公众号文章《QQ三国，10.10杜康解忧最低杂物价格》正文图片。
+> 录入时用文章里的 **9.5 / 9.21 两列**与站点既有数据做了逐行交叉校验，205 行**零差异**，据此确认读数无误；币价 283.5 另有文章表头 `币价: 284 | 284 | 283.5` 直接佐证。
