@@ -29,14 +29,38 @@
 >
 > 另一个必须记住的点：**`workbuddy_sites_deploy` 是"整目录覆盖"，目标应用由本地目录/会话登记决定。任何探测目录都不得走发布通道，否则会顶掉线上内容。** 另外 `workbuddy_cloud_service activate` 创建应用时会重写会话登记表，**副作用是可能把上一个应用的发布踢下线**（`-00179` 就是这样变成 404 的），不要反复试探。
 
-### 关于 wj.ores.cc
+### 关于 wj.ores.cc —— 完整归属链（2026-10-11 审计）
 
-托管于 **EdgeOne Pages（Makers）海外区**
-- 项目名 `game-price-board`，Project ID `makers-zrrxfmmcxb1t`
-- 控制台：<https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t>
-- 自定义域：`wj.ores.cc` → CNAME `wj → wj.ores.cc.pages.dnsoe8.com`
+| 环节 | 归属 | 依据 |
+|---|---|---|
+| 域名注册商 | **Spaceship, Inc.** | RDAP：`registration 2026-09-13`、`expiration` **2027-09-13**、状态 `client transfer prohibited` |
+| DNS 托管 | **Spaceship** | NS = `launch1.spaceship.net` / `launch2.spaceship.net` |
+| DNS 记录 | `wj` → CNAME `wj.ores.cc.pages.dnsoe8.com` | `Resolve-DnsName wj.ores.cc` |
+| 托管平台 | **EdgeOne Makers（海外区）**，项目 `game-price-board` | Project ID `makers-zrrxfmmcxb1t`；响应头 `Server: edgeone makers` |
+| 平台账号 | **用户本人腾讯云账号** `1049388745@qq.com`（Account ID `450200529839`） | `edgeone whoami` |
+| 是否匿名部署 | **否**，是账号内的正式项目 | 全盘无 `.edgeone/anonymous.json`，无需 `makers claim` |
+| 控制台 | <https://console.tencentcloud.com/edgeone/pages/project/makers-zrrxfmmcxb1t> | — |
+| 部署通道 | `tools/deploy.sh` 阶段 B（令牌在项目目录之外） | 见「凭据」表 |
 
-> 该域名是**用户自有域名**，永远不会被平台收回，因此作为对外备用入口长期保留。
+链路健康度（实测）：
+
+- `http://wj.ores.cc` → **302** → `https://wj.ores.cc`（强制 HTTPS 已生效）
+- `https://wj.ores.cc` → **200**，46303 B，MD5 `4783d249…`，与 WorkBuddy 主站**逐字节一致**
+- `Cache-Control: public, max-age=0, must-revalidate` —— 部署后立即生效，不用等 CDN 刷新
+
+> ⏰ **续费提醒**：`ores.cc` 注册于 **2026-09-13**，**到期 2027-09-13**（1 年期）。请到 Spaceship 后台**开启自动续费** —— 域名一旦过期，`wj` / `wdzl` / `ibuy` 三条子域会同时失效。
+
+> 该域名是**用户自有域名**，不会像 `.app.workbuddy.host` 那样被平台"消耗掉前缀"，因此作为对外备用入口长期保留。
+
+#### `ores.cc` 各子域当前归属
+
+| 子域 | 指向 | 用途 |
+|---|---|---|
+| `wj.ores.cc` | EdgeOne Makers 项目 `game-price-board` | 物价看板备用入口 |
+| `wdzl.ores.cc` | EdgeOne Makers 另一项目（CNAME 后缀 `dnsoe7.com`） | 链接转换站 |
+| `ibuy.ores.cc` | `poe112233.github.io`（GitHub Pages） | 跳转页 |
+| `ores.cc`（根域） | 返回 301/302 | — |
+| `www.ores.cc` | 无记录 | — |
 
 ### ⚠️ 追加币价历史时必看：`COIN_DATES` 不能整段重写
 
