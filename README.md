@@ -88,20 +88,24 @@ assert len(set(D)) == len(D)
 
 两边保持同一条历史线。`tools/deploy.sh` 会自动推送到这两个远程。
 
-> ⚠️ **GitHub 推送当前不可用（2026-10-11 19:45 实测）**
+> ✅ **GitHub 推送已恢复正常（2026-10-11 20:35 实测）**
 >
-> 仓库存在且为 **Public**（未认证调 `https://api.github.com/repos/poe112233/game-price-board` 即返回 200，`private: false`），问题**纯粹是"没有可用写凭据"**：
-> 1. **细粒度 PAT** —— 手上这枚返回 `401 Bad credentials`。格式本身合规（93 字符 = `11` + 22 + 1 + 59），所以**不是权限问题，是令牌已失效/被撤销/过期**。
-> 2. **系统凭据管理器里的旧经典令牌** `ghp_…`（40 位）—— 同样 401。
-> 3. **GitHub 连接器** —— 以 `poe112233` 身份 OAuth 授权，**只读**：读取正常，但写入返回 `403 Resource not accessible by integration`。App 安装未授予 `Contents: write`。
+> 之前不通的原因是**令牌本身失效**（`401 Bad credentials` / 推送报 `remote: Invalid username or token.`），与权限配置无关——仓库确实是 Public 且存在。
+> 20:30 用户重新生成细粒度令牌后，`git push github main` 已成功：`50464f2..76319b4`，两个远程现在同处一条历史线。
 >
-> **恢复方式（任选其一）**：
-> ① **新建一枚细粒度令牌**：github.com → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token；Repository access 选 **Only select repositories → `poe112233/game-price-board`**，Permissions → Repository permissions → **Contents: Read and write**，Expiration 建议 ≥ 90 天。生成后把 `github_pat_…` 交给 AI，由 AI 写入 `~/.workbuddy/github/game-price-board.json`（**项目目录之外**）。
-> ② 或在 GitHub 上给该连接器的 App 安装补上 `Contents: Read and write` 权限。
+> **凭据存放（令牌不再写进 `.git/config`）**
 >
-> ⚠️ **不要把令牌写进 `.git/config` 的 remote URL**（历史上就是这么做的）。虽然 `.git` 不参与推送、不会泄露到仓库，但明文落盘仍是隐患。正确做法：令牌存在项目外的凭据文件里，推送时用 `git -c http.extraheader="Authorization: Basic <base64(user:token)>"` 临时注入。
+> | 用途 | 文件 | 键 |
+> |---|---|---|
+> | GitHub | `~/.workbuddy/github/game-price-board.json` | `GITHUB_TOKEN` / `GITHUB_USER` |
+> | CNB | `~/.workbuddy/cnb/game-price-board.json` | `CNB_TOKEN` / `CNB_USER` |
+> | EdgeOne | `~/.workbuddy/edgeone/game-price-board.json` | `EDGEONE_PAGES_API_TOKEN` |
 >
-> 在此之前，`bash tools/deploy.sh` 的 GitHub 环节会失败并给出告警，**CNB 与线上部署不受影响**（脚本把两个远程分开处理，一个失败不影响另一个）。
+> 推送时由 `tools/deploy.sh` 用 `git -c http.extraheader="Authorization: Basic <base64(user:token)>"` **临时注入**。之所以不用凭据助手：沙箱里 git 凭据助手子进程会被 SIGTERM；之所以不把令牌写进 remote URL：明文落盘是隐患（历史上就是这么做的，已清理）。
+>
+> **令牌过期后怎么续**：重新生成一枚细粒度令牌 —— Repository access 选 **Only select repositories → `poe112233/game-price-board`**，Permissions → Repository permissions → **Contents: Read and write**，Expiration 建议 ≥ 90 天，然后把新值写回上表对应的 JSON 即可。
+>
+> ⚠️ **GitHub 连接器不可用于推送**：它以 `poe112233` 身份 OAuth 授权但**只读**，写入返回 `403 Resource not accessible by integration`。
 
 ### 一键操作
 
@@ -117,8 +121,9 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 1. 从 `index.html` 读出数据周期，与预期比对
 2. 打包 `dist/`（只放 `index.html`，避免把 `node_modules`、`.git` 传上 CDN）
 3. 用 EdgeOne CLI 直接部署到 `game-price-board` 项目生产环境
-4. 把变更提交并推送到 `origin`(CNB) 与 `github` 两个远程
-5. 轮询线上站点，确认数据周期已收敛（CDN 有缓存，需重试几次）
+4. 把 `index.html` 同步到主站镜像目录 `dk-price/`（防止两处漂移）
+5. 把变更提交并推送到 `origin`(CNB) 与 `github` 两个远程
+6. 轮询线上站点，确认数据周期已收敛（CDN 有缓存，需重试几次），并顺便校验 WorkBuddy 主站版本
 
 ### 发布到 WorkBuddy 应用
 
@@ -140,10 +145,12 @@ bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 | 用途 | 位置 | 备注 |
 |---|---|---|
 | EdgeOne 部署令牌 | 环境变量 `EDGEONE_PAGES_API_TOKEN`，或 `~/.workbuddy/edgeone/game-price-board.json` | **已移出项目目录**，避免被整目录发布带出去 |
-| CNB 推送 | 内嵌在 `.git/config` 的 `origin` remote URL | 不入库（沙箱里 git 凭据助手会被 SIGTERM，只能"令牌内嵌 URL + `credential.helper=\"\"`"） |
-| GitHub 推送 | `~/.workbuddy/github/game-price-board.json`（**待补**） | 现有令牌已 401；**不要**再把令牌写进 remote URL |
+| GitHub 推送 | `~/.workbuddy/github/game-price-board.json`（`GITHUB_TOKEN` / `GITHUB_USER`） | ✅ 可用 |
+| CNB 推送 | `~/.workbuddy/cnb/game-price-board.json`（`CNB_TOKEN` / `CNB_USER`） | ✅ 可用 |
 
-脚本会自动绕过本机残留代理（`NO_PROXY=*`），并清空 git 凭据助手——沙箱里凭据助手子进程会被终止，必须用「令牌内嵌 URL + `credential.helper=""`」这一组合。
+**三个令牌全部存放在项目目录之外**，`.git/config` 里不再有任何明文令牌（2026-10-11 已清理）。
+
+脚本会自动绕过本机残留代理（`NO_PROXY=*`），并清空 git 凭据助手——沙箱里凭据助手子进程会被终止，所以改由 `http.extraheader` 注入 `Authorization: Basic`。这两个动作都不能省，否则推送会静默失败。
 
 ### 更新数据的方法
 

@@ -9,10 +9,12 @@
 #    bash tools/deploy.sh --check-only # 只校验线上，不改动任何东西
 #    bash tools/deploy.sh --dry-run    # 演练，不做实际变更
 #
-#  凭据来源（按优先级）：
-#    EdgeOne : 环境变量 EDGEONE_PAGES_API_TOKEN → ~/.workbuddy/edgeone/game-price-board.json
-#    Git-CNB : 内嵌在 .git/config 的 origin remote URL 里（不入库）
-#    Git-GH  : ~/.workbuddy/github/game-price-board.json（现有令牌已 401，见 README）
+#  凭据来源（全部在项目目录之外，绝不写进 .git/config）：
+#    EdgeOne  : 环境变量 EDGEONE_PAGES_API_TOKEN → ~/.workbuddy/edgeone/game-price-board.json
+#    GitHub   : ~/.workbuddy/github/game-price-board.json  → { GITHUB_TOKEN, GITHUB_USER }
+#    CNB      : ~/.workbuddy/cnb/game-price-board.json     → { CNB_TOKEN, CNB_USER }
+#    推送时用 git -c http.extraheader="Authorization: Basic <base64(user:token)>" 临时注入，
+#    不用凭据助手（沙箱里凭据助手子进程会被 SIGTERM），也不把令牌写进 remote URL。
 #
 #  ⚠️ 脚本只负责「EdgeOne 部署 + 双仓库推送」。
 #     WorkBuddy 主站（MAIN_URL）需由 AI 单独调用 workbuddy_sites_deploy 发布 MIRROR_DIR，
@@ -51,6 +53,19 @@ c_step() { printf '\n\033[36m▶ %s\033[0m\n' "$1"; }
 export NO_PROXY="*"
 export no_proxy="*"
 unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy 2>/dev/null || true
+
+# ---------- 凭据读取（项目目录之外） ----------
+cred_token() {   # $1=凭据文件  $2=键名
+  local f="$1" key="$2"
+  [ -f "$f" ] || return 1
+  "C:/Users/10493/.workbuddy/binaries/python/versions/3.13.12/python.exe" -c \
+    "import json,sys;print(json.load(open(sys.argv[1]))[sys.argv[2]])" \
+    "$(cygpath -w "$f")" "$key" 2>/dev/null
+}
+
+auth_header() {  # $1=用户名  $2=令牌
+  printf 'Authorization: Basic %s' "$(printf '%s:%s' "$1" "$2" | base64 -w0)"
+}
 
 # ---------- 1. 读取线上数据周期（校验用） ----------
 live_period() {
@@ -193,16 +208,34 @@ if [ "$MODE" = "full" ] || [ "$MODE" = "sync" ]; then
     c_warn "演练模式，跳过推送"
   else
     for remote in origin github; do
-      if git remote | grep -qx "$remote"; then
-        if timeout 180 git -c credential.helper= -c http.proxy= push "$remote" main 2>&1 \
-             | sed -E 's#//[^@]*@#//***@#g' | tail -3; then
-          c_ok "推送成功: $remote"
-          PUSHED=$((PUSHED+1))
-        else
-          c_warn "推送失败: $remote（本地提交已保留，可稍后重试）"
-        fi
-      else
+      if ! git remote | grep -qx "$remote"; then
         c_warn "未配置远程 $remote，跳过"
+        continue
+      fi
+
+      # 组装 Authorization 头（令牌从项目外的凭据文件读，不进 remote URL）
+      HDR_OPT=()
+      if [ "$remote" = "github" ]; then
+        CRED="$HOME/.workbuddy/github/game-price-board.json"
+        TK="$(cred_token "$CRED" GITHUB_TOKEN)" || TK=""
+        US="$(cred_token "$CRED" GITHUB_USER)"  || US=""
+        [ -n "$TK" ] || c_warn "未找到 GitHub 令牌（$CRED），将尝试匿名推送"
+      else
+        CRED="$HOME/.workbuddy/cnb/game-price-board.json"
+        TK="$(cred_token "$CRED" CNB_TOKEN)" || TK=""
+        US="$(cred_token "$CRED" CNB_USER)"  || US=""
+      fi
+      if [ -n "$TK" ]; then
+        HDR_OPT=(-c "http.extraheader=$(auth_header "${US:-cnb}" "$TK")")
+      fi
+
+      if timeout 180 git -c credential.helper= -c http.proxy= ${HDR_OPT[@]+"${HDR_OPT[@]}"} \
+           push "$remote" main 2>&1 \
+           | sed -E -e 's#//[^@]*@#//***@#g' -e 's#(Basic) [A-Za-z0-9+/=]{16,}#\1 ***#g' | tail -3; then
+        c_ok "推送成功: $remote"
+        PUSHED=$((PUSHED+1))
+      else
+        c_warn "推送失败: $remote（本地提交已保留，可稍后重试）"
       fi
     done
   fi
