@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+
+# 本地凭据，绝不入库
+.edgeone/
+.env
+.env.local
+
+# 部署临时产物
+dist/
+*.log

@@ -1,0 +1,14 @@
+{
+  "name": "game-price-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "杜康-QQ三国 游戏物价波动看板",
+  "scripts": {
+    "deploy": "bash tools/deploy.sh",
+    "sync": "bash tools/deploy.sh --sync-only",
+    "check": "bash tools/deploy.sh --check-only"
+  },
+  "devDependencies": {
+    "edgeone": "1.6.39"
+  }
+}
