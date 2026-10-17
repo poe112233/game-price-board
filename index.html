@@ -68,12 +68,26 @@ h1{font-size:30px;font-weight:800;letter-spacing:1px;
 .cpt{font-size:17px;font-weight:800}
 .cpbadge{font-size:11px;color:var(--gold2);border:1px solid var(--goldline);border-radius:6px;
   padding:1px 7px;vertical-align:2px;margin-left:5px;font-weight:600}
-.cptabs{display:flex;gap:8px}
+.cptabs{display:flex;gap:8px;align-items:center}
 .cptab{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:999px;
-  padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s}
+  padding:6px 14px;font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
 .cptab:hover{color:var(--txt);border-color:var(--hoverline)}
 .cptab.on{background:linear-gradient(92deg,var(--chipon1),var(--chipon2));border-color:var(--goldline2);
   color:var(--gold2);font-weight:700}
+.cprange{font-size:12px;color:var(--dim);margin-top:4px}
+/* 「更多」时间维度下拉 */
+.cpmore{position:relative}
+.cpcaret{font-size:10px;margin-left:4px;display:inline-block;transition:transform .15s}
+.cpmore.open .cpcaret{transform:rotate(180deg)}
+.cpmenu{position:absolute;right:0;top:calc(100% + 6px);min-width:128px;padding:6px;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 10px 26px var(--shadow2);display:none;z-index:60}
+.cpmore.open .cpmenu{display:block}
+.cpitem{display:block;width:100%;text-align:left;background:none;border:0;color:var(--dim);
+  font-family:inherit;font-size:13px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:.12s}
+.cpitem:hover{background:var(--soft);color:var(--txt)}
+.cpitem.on{color:var(--gold2);font-weight:700;
+  background:linear-gradient(92deg,var(--chipon1),var(--chipon2))}
 .cpkpi{display:flex;gap:30px;flex-wrap:wrap;margin:14px 0 2px}
 .cpk{font-size:12px;color:var(--dim)}
 .cpk b{display:block;font-size:20px;font-weight:800;margin-top:2px;color:var(--strong)}
@@ -209,10 +223,19 @@ svg.big .pv{fill:var(--tc)}
     <div class="cph">
       <div>
         <div class="cpt">💰 币价走势 <span class="cpbadge">出币</span></div>
+        <div class="cprange" id="coinRange"></div>
       </div>
       <div class="cptabs" id="coinTabs">
         <button class="cptab" data-days="7">近7天</button>
         <button class="cptab on" data-days="30">近30天</button>
+        <div class="cpmore" id="coinMore">
+          <button class="cptab cpmorebtn" id="coinMoreBtn" aria-haspopup="true" aria-expanded="false">更多<span class="cpcaret">▼</span></button>
+          <div class="cpmenu" id="coinMenu" role="menu">
+            <button class="cpitem" data-days="90" role="menuitem">近90天</button>
+            <button class="cpitem" data-days="180" role="menuitem">近180天</button>
+            <button class="cpitem" data-days="365" role="menuitem">近1年</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="cpkpi" id="coinKpi"></div>
@@ -705,6 +728,13 @@ function renderCoin(days){
   const ds=COIN_DATES.slice(-n), vs=COIN.slice(-n);
   const first=vs[0], last=vs[vs.length-1];
   const chg=(last-first)/first*100, k=cls(chg);
+  /* 顶部范围提示：如实反映实际收录天数（选 180/365 天而数据不足时会说明） */
+  const rgEl=$("#coinRange");
+  if(rgEl){
+    let txt=ds[0]+" – "+ds[ds.length-1]+" · 共 "+vs.length+" 天";
+    if(days>COIN.length) txt+=" · 数据自 "+COIN_DATES[0]+" 起，暂无更早记录";
+    rgEl.textContent=txt;
+  }
   $("#coinKpi").innerHTML =
     '<div class="cpk">当前（'+ds[ds.length-1]+'）<b>'+last+'</b></div>'+
     '<div class="cpk">期间涨跌<b class="'+k+'">'+(chg>0?"+":"")+chg.toFixed(2)+'%</b></div>'+
@@ -729,21 +759,81 @@ function renderCoin(days){
   });
   const pl=vs.map((v,i)=>X(i).toFixed(1)+","+Y(v).toFixed(1)).join(" ");
   const dots=vs.map((v,i)=>'<circle class="td" cx="'+X(i).toFixed(1)+'" cy="'+Y(v).toFixed(1)+'" r="'+(i===vs.length-1?5:3.5)+'"/>').join("");
-  /* 每个数据点显示数值标签，上下交错防重叠；末点加粗醒目 */
-  const lbls=vs.map((v,i)=>{
-    const lastPt=i===vs.length-1;
-    const y=Y(v)+(i%2===0||lastPt?-10:20);
-    return '<text class="pv" x="'+X(i).toFixed(1)+'" y="'+y.toFixed(1)+'" text-anchor="middle"'+(lastPt?"":' style="font-size:11px;opacity:.85"')+'>'+v+'</text>';
+  /* 数值标签：点数少时全标；点数多时只标首点/末点/最高/最低，避免挤成一团 */
+  const marks=new Set();
+  if(vs.length<=10){ vs.forEach((v,i)=>marks.add(i)); }
+  else {
+    const edges=[0, vs.length-1];
+    marks.add(0); marks.add(vs.length-1);
+    /* 极值点若不挨着首末点才额外标注，避免标签叠字 */
+    [vs.indexOf(mx), vs.indexOf(mn)].forEach(i=>{
+      if(i>=0 && edges.every(e=>Math.abs(e-i)>1)) marks.add(i);
+    });
+  }
+  const lbls=[...marks].sort((a,b)=>a-b).map(i=>{
+    const v=vs[i], lastPt=i===vs.length-1;
+    const anc=i===0?"start":(lastPt?"end":"middle");
+    return '<text class="pv" x="'+X(i).toFixed(1)+'" y="'+(Y(v)-10).toFixed(1)+'" text-anchor="'+anc+'"'
+      +(lastPt?"":' style="font-size:11px;opacity:.85"')+'>'+v+'</text>';
   }).join("");
   $("#coinBig").innerHTML='<svg class="big '+k+'" viewBox="0 0 '+W+' '+H+'">'+grid+ax+
     '<polyline class="tl" points="'+pl+'"/>'+dots+lbls+'</svg>';
 }
-renderCoin(30);
+/* 时间维度切换：近7天 / 近30天为常驻按钮，其余维度收在「更多」下拉里 */
+const COIN_DEFAULT=30;
+function setCoinDays(days){
+  const more=$("#coinMore"), mbtn=$("#coinMoreBtn");
+  document.querySelectorAll("#coinTabs .cptab[data-days]").forEach(t=>{
+    t.classList.toggle("on", +t.dataset.days===days);
+  });
+  let inMenu=false, hitTxt="";
+  document.querySelectorAll("#coinMenu .cpitem").forEach(t=>{
+    const hit=+t.dataset.days===days;
+    t.classList.toggle("on", hit);
+    if(hit){ inMenu=true; hitTxt=t.textContent.trim(); }
+  });
+  if(mbtn){
+    mbtn.classList.toggle("on", inMenu);
+    mbtn.setAttribute("aria-expanded","false");
+    mbtn.innerHTML=(inMenu?hitTxt:"更多")+'<span class="cpcaret">▼</span>';
+  }
+  if(more) more.classList.remove("open");
+  renderCoin(days);
+  try{ localStorage.setItem("priceboard-coindays", String(days)); }catch(e){}
+}
 $("#coinTabs").addEventListener("click",e=>{
-  const b=e.target.closest(".cptab"); if(!b) return;
-  document.querySelectorAll(".cptab").forEach(t=>t.classList.toggle("on",t===b));
-  renderCoin(+b.dataset.days);
+  const item=e.target.closest(".cpitem");
+  if(item){ setCoinDays(+item.dataset.days); return; }
+  const btn=e.target.closest(".cptab");
+  if(!btn) return;
+  if(btn.id==="coinMoreBtn"){
+    const open=$("#coinMore").classList.toggle("open");
+    btn.setAttribute("aria-expanded", open?"true":"false");
+    return;
+  }
+  setCoinDays(+btn.dataset.days);
 });
+/* 点击空白处或按 Esc 关闭下拉 */
+document.addEventListener("click",e=>{
+  const more=$("#coinMore"); if(!more || more.contains(e.target)) return;
+  more.classList.remove("open");
+  const b=$("#coinMoreBtn"); if(b) b.setAttribute("aria-expanded","false");
+});
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Escape") return;
+  const more=$("#coinMore"); if(more) more.classList.remove("open");
+  const b=$("#coinMoreBtn"); if(b) b.setAttribute("aria-expanded","false");
+});
+/* 初始维度：默认近30天，并记住上次选择 */
+(function(){
+  let d=COIN_DEFAULT;
+  try{
+    const s=parseInt(localStorage.getItem("priceboard-coindays")||"",10);
+    if(s>0) d=s;
+  }catch(e){}
+  if([7,30,90,180,365].indexOf(d)<0) d=COIN_DEFAULT;
+  setCoinDays(d);
+})();
 /* 页面顶部日期标签跟随 DATES 自动更新，避免每次新增期次手工改文案 */
 (function(){
   const f=document.getElementById("firstDate"), l1=document.getElementById("lastDate"), l2=document.getElementById("lastDate2");
