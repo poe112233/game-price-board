@@ -68,16 +68,17 @@ auth_header() {  # $1=用户名  $2=令牌
 }
 
 # ---------- 1. 读取线上数据周期（校验用） ----------
+# 直接取 DATES 数组的最后一项，避免依赖文件里的注释文案
 live_period() {
   local html
   html="$(curl -s --noproxy '*' -m 30 -H 'Cache-Control: no-cache' \
           -H 'Pragma: no-cache' "${LIVE_URL}?_cb=$RANDOM$RANDOM")" || return 1
-  printf '%s' "$html" | grep -oE '8\.[0-9]+-[0-9]+\.[0-9]+' | head -1
+  printf '%s' "$html" | grep -oE 'const DATES = \[[^]]*\]' | grep -oE '"[0-9]+\.[0-9]+"' | tail -1 | tr -d '"'
 }
 
 # ---------- 2. 读取本地数据周期 ----------
 local_period() {
-  grep -oE '8\.[0-9]+-[0-9]+\.[0-9]+' index.html | head -1
+  grep -oE 'const DATES = \[[^]]*\]' index.html | grep -oE '"[0-9]+\.[0-9]+"' | tail -1 | tr -d '"'
 }
 
 # ============================================================
